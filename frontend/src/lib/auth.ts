@@ -50,3 +50,38 @@ export const signOut = async () => {
         return { error }
     }
 }
+
+export const signInWithGoogle = async () => {
+    try {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+                redirectTo: `${window.location.origin}/`,
+            },
+        })
+        return { data, error }
+    } catch (error) {
+        console.error("Google sign in error:", error)
+        return { data: null, error }
+    }
+}
+
+export const getCurrentSession = async () => {
+    try {
+        const { data, error } = await supabase.auth.getSession()
+        return { data, error }
+    } catch (error) {
+        console.error("Get session error:", error)
+        return { data: null, error }
+    }
+}
+
+export const getCurrentUser = async () => {
+    try {
+        const { data, error } = await supabase.auth.getUser()
+        return { data, error }
+    } catch (error) {
+        console.error("Get user error:", error)
+        return { data: null, error }
+    }
+}

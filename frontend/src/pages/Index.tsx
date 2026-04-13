@@ -1,6 +1,4 @@
 import { motion } from "framer-motion";
-import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
-import { TopNavbar } from "@/components/layout/TopNavbar";
 import { StatCard } from "@/components/cards/StatCard";
 import { RecentValidations } from "@/components/dashboard/RecentValidations";
 import { InsightsPanel } from "@/components/dashboard/InsightsPanel";
@@ -20,81 +18,73 @@ const stagger = {
 
 const Index = () => {
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <DashboardSidebar />
-
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <TopNavbar />
-
-        <main className="flex-1 overflow-y-auto">
-          {/* Hero section with particles */}
-          <div className="relative px-6 pt-6 pb-2">
-            <ParticleBackground />
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-              className="relative z-10"
-            >
-              <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Dashboard</h1>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20 ai-badge-glow">
-                  AI Powered
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Real-time startup validation analytics &amp; insights
-              </p>
-            </motion.div>
+    <>
+      {/* Hero section with particles */}
+      <div className="relative px-6 pt-6 pb-2">
+        <ParticleBackground />
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="relative z-10"
+        >
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Dashboard</h1>
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20 ai-badge-glow">
+              AI Powered
+            </span>
           </div>
+          <p className="text-sm text-muted-foreground">
+            Real-time startup validation analytics &amp; insights
+          </p>
+        </motion.div>
+      </div>
 
-          <div className="px-6 pb-8">
-            {/* Stats */}
-            <motion.div
-              variants={stagger}
-              initial="hidden"
-              animate="show"
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
-            >
-              {statsData.map((stat, i) => (
-                <StatCard key={stat.label} {...stat} index={i} />
-              ))}
-            </motion.div>
+      <div className="px-6 pb-8">
+        {/* Stats */}
+        <motion.div
+          variants={stagger}
+          initial="hidden"
+          animate="show"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+        >
+          {statsData.map((stat, i) => (
+            <StatCard key={stat.label} {...stat} index={i} />
+          ))}
+        </motion.div>
 
-            {/* Idea Submission Form Section */}
-            <div className="mb-8">
-              <IdeaSubmissionForm />
-            </div>
+        {/* Idea Submission Form Section */}
+        <div className="mb-8">
+          <IdeaSubmissionForm />
+        </div>
 
-            {/* Ideas List Section */}
-            <div className="mb-8">
-              <IdeasList />
-            </div>
+        {/* Ideas List Section */}
+        <div className="mb-8">
+          <IdeasList />
+        </div>
 
-            {/* Charts Row 1 */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-              <IndustryTrendChart />
-              <ScoreDistributionChart />
-            </div>
+        {/* Charts Row 1 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <IndustryTrendChart />
+          <ScoreDistributionChart />
+        </div>
 
-            {/* Table + Insights */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-              <div className="lg:col-span-2">
-                <RecentValidations />
-              </div>
-              <InsightsPanel />
-            </div>
-
-            {/* Market Opportunity */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <MarketOpportunityChart />
-            </div>
+        {/* Table + Insights */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+          <div className="lg:col-span-2">
+            <RecentValidations />
           </div>
-        </main>
+          <InsightsPanel />
+        </div>
+
+        {/* Market Opportunity */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <MarketOpportunityChart />
+        </div>
       </div>
 
       <FloatingActionButton />
-    </div>
+    </>
   );
 };
 

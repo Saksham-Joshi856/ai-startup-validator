@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
@@ -13,17 +14,24 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", badge: null },
-  { icon: Lightbulb, label: "Validate Idea", badge: "New" },
-  { icon: FileText, label: "My Reports", badge: "3" },
-  { icon: TrendingUp, label: "Market Insights", badge: null },
-  { icon: Bot, label: "AI Advisor", badge: "AI" },
-  { icon: Settings, label: "Settings", badge: null },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: Lightbulb, label: "Validate Idea", path: "/validate", badge: "New" },
+  { icon: FileText, label: "My Reports", path: "/reports", badge: "3" },
+  { icon: TrendingUp, label: "Market Insights", path: "/insights", badge: null },
+  { icon: Bot, label: "AI Advisor", path: "/advisor", badge: "AI" },
+  { icon: Settings, label: "Settings", path: "/settings", badge: null },
 ];
 
 export function DashboardSidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const getActiveIndex = () => {
+    return navItems.findIndex(item => item.path === location.pathname);
+  };
+
+  const activeIndex = getActiveIndex() !== -1 ? getActiveIndex() : 0;
 
   return (
     <motion.aside
@@ -61,14 +69,13 @@ export function DashboardSidebar() {
         {navItems.map((item, i) => (
           <motion.button
             key={item.label}
-            onClick={() => setActiveIndex(i)}
+            onClick={() => navigate(item.path)}
             whileHover={{ x: 2 }}
             whileTap={{ scale: 0.98 }}
-            className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors duration-200 ${
-              activeIndex === i
-                ? "text-primary"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors duration-200 ${activeIndex === i
+              ? "text-primary"
+              : "text-muted-foreground hover:text-foreground"
+              }`}
           >
             {activeIndex === i && (
               <motion.div
@@ -93,13 +100,12 @@ export function DashboardSidebar() {
                 >
                   <span className="whitespace-nowrap">{item.label}</span>
                   {item.badge && (
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap ${
-                      item.badge === "AI"
-                        ? "bg-accent/20 text-accent ai-badge-glow"
-                        : item.badge === "New"
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap ${item.badge === "AI"
+                      ? "bg-accent/20 text-accent ai-badge-glow"
+                      : item.badge === "New"
                         ? "bg-primary/20 text-primary"
                         : "bg-muted text-muted-foreground"
-                    }`}>
+                      }`}>
                       {item.badge}
                     </span>
                   )}

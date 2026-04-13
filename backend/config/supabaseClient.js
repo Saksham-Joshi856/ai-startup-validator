@@ -1,11 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-
 let supabase = null;
 
 function initializeSupabase() {
+    // Read environment variables at CALL TIME, not at import time
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+
     if (!supabaseUrl) {
         throw new Error('Missing environment variable: SUPABASE_URL');
     }
