@@ -1,0 +1,23 @@
+{
+    "name": "ai-startup-validator-backend",
+    "version": "1.0.0",
+    "description": "Backend API for AI Startup Validator",
+    "main": "index.js",
+    "type": "module",
+    "scripts": {
+        "dev": "nodemon index.js",
+        "start": "node index.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "express": "^4.18.2",
+        "cors": "^2.8.5",
+        "dotenv": "^16.0.3",
+        "@supabase/supabase-js": "^2.38.0"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.1"
+    }
+}
