@@ -28,7 +28,8 @@ export function useAnalyzeIdea(): UseAnalyzeIdeaResult {
         setData(null);
 
         try {
-            const response = await fetch('/api/analyzeIdea', {
+            const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+            const response = await fetch(`${backendUrl}/api/analyzeIdea`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

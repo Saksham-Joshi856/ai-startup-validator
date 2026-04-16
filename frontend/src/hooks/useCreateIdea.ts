@@ -34,7 +34,8 @@ export function useCreateIdea() {
 
             // Make API request to createIdea endpoint
             // This can be adapted to your API route setup
-            const response = await fetch('/api/createIdea', {
+            const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+            const response = await fetch(`${backendUrl}/api/createIdea`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

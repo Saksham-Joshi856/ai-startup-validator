@@ -4,8 +4,8 @@
  * Uses fetch API with error handling
  */
 
-// Use relative paths so Vite proxy can intercept
-const API_BASE_URL = '';
+// Use VITE_BACKEND_URL from environment, with fallback to empty string for development proxy
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || '';
 
 export interface ApiResponse<T> {
     success: boolean;
