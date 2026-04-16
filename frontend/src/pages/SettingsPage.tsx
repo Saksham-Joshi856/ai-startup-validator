@@ -2,32 +2,35 @@ import { motion } from "framer-motion";
 import { Settings, Bell, Shield, Moon, Globe, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { signOut } from "@/lib/auth";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabaseClient";
+import { useTheme } from "@/hooks/use-theme";
 
 export const SettingsPage = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const { theme, toggleTheme } = useTheme();
     const [settings, setSettings] = useState({
         emailNotifications: true,
         pushNotifications: false,
-        darkMode: true,
+        darkMode: theme === "dark",
         analytics: true,
         language: "en",
     });
     const [loading, setLoading] = useState(false);
 
     const handleToggle = (key: string) => {
+        if (key === "darkMode") {
+            toggleTheme();
+        }
         setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
     };
 
     const handleLogout = async () => {
         try {
             setLoading(true);
-            const { error } = await signOut();
-            if (error) {
-                console.error("Logout error:", error);
-            } else {
-                navigate("/login");
-            }
+            await supabase.auth.signOut();
+            navigate("/login");
         } catch (err) {
             console.error("Logout exception:", err);
         } finally {
@@ -115,16 +118,18 @@ export const SettingsPage = () => {
                                 <label className="text-sm font-medium text-foreground block mb-2">Email Address</label>
                                 <input
                                     type="email"
-                                    placeholder="your@email.com"
-                                    className="w-full px-3 py-2 rounded-lg bg-muted/30 border border-border/30 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
+                                    value={user?.email || ""}
+                                    disabled
+                                    className="w-full px-3 py-2 rounded-lg bg-muted/30 border border-border/30 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 disabled:opacity-50"
                                 />
                             </div>
                             <div>
                                 <label className="text-sm font-medium text-foreground block mb-2">Full Name</label>
                                 <input
                                     type="text"
-                                    placeholder="John Doe"
-                                    className="w-full px-3 py-2 rounded-lg bg-muted/30 border border-border/30 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
+                                    value={user?.user_metadata?.full_name || user?.email?.split("@")[0] || ""}
+                                    disabled
+                                    className="w-full px-3 py-2 rounded-lg bg-muted/30 border border-border/30 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 disabled:opacity-50"
                                 />
                             </div>
                         </div>
@@ -152,9 +157,7 @@ export const SettingsPage = () => {
                                         </div>
                                         <button
                                             onClick={() => handleToggle(setting.id)}
-                                            className={`w-10 h-6 rounded-full transition-all duration-300 relative ${settings[setting.id as keyof typeof settings]
-                                                ? "bg-primary/30"
-                                                : "bg-muted/30"
+                                            className={`w-10 h-6 rounded-full transition-all duration-300 relative ${settings[setting.id as keyof typeof settings] ? "bg-primary/30" : "bg-muted/30"
                                                 }`}
                                         >
                                             <motion.div
@@ -215,21 +218,6 @@ export const SettingsPage = () => {
                             className="px-4 py-2 rounded-lg bg-red-500/20 text-red-500 font-medium hover:bg-red-500/30 transition-colors disabled:opacity-50"
                         >
                             {loading ? "Signing out..." : "Sign Out"}
-                        </button>
-                    </motion.div>
-
-                    {/* Action Buttons */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3, duration: 0.5 }}
-                        className="flex gap-4 pt-4"
-                    >
-                        <button className="px-6 py-2 rounded-lg bg-primary/20 text-primary font-medium hover:bg-primary/30 transition-colors">
-                            Save Changes
-                        </button>
-                        <button className="px-6 py-2 rounded-lg bg-muted text-muted-foreground font-medium hover:bg-muted/80 transition-colors">
-                            Cancel
                         </button>
                     </motion.div>
                 </div>

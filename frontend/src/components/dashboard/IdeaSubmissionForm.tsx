@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAnalyzeIdea } from '@/hooks/useAnalyzeIdea';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -68,6 +69,7 @@ const ScoreBadge = ({ label, score, maxScore = 100 }: ScoreBadgeProps) => {
 export function IdeaSubmissionForm() {
     const [ideaText, setIdeaText] = useState('');
     const [selectedIndustry, setSelectedIndustry] = useState('');
+    const { user } = useAuth();
     const { isLoading, error, data, analyzeIdea, reset } = useAnalyzeIdea();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -77,7 +79,12 @@ export function IdeaSubmissionForm() {
             return;
         }
 
-        await analyzeIdea(ideaText, selectedIndustry);
+        if (!user?.id) {
+            console.error('User not authenticated');
+            return;
+        }
+
+        await analyzeIdea(user.id, ideaText, selectedIndustry);
     };
 
     const handleReset = () => {

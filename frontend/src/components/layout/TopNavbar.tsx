@@ -1,9 +1,25 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Bell, Sun, Moon, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Search, Bell, Sun, Moon, Sparkles, LogOut, Settings } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabaseClient";
 
 export function TopNavbar() {
   const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const userEmail = user?.email || "User";
+  const userName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
+  const avatarUrl = user?.user_metadata?.avatar_url;
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
 
   return (
     <header className="h-14 border-b border-border/30 bg-card/20 backdrop-blur-2xl flex items-center justify-between px-6 z-10">
@@ -54,10 +70,60 @@ export function TopNavbar() {
           <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-accent ai-badge-glow border-2 border-card" />
         </motion.button>
 
-        <motion.div
-          whileHover={{ scale: 1.08 }}
-          className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent ml-1 cursor-pointer ring-2 ring-primary/20 ring-offset-2 ring-offset-background"
-        />
+        {/* User Avatar Dropdown */}
+        <div className="relative ml-1">
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowDropdown(!showDropdown)}
+            className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent cursor-pointer ring-2 ring-primary/20 ring-offset-2 ring-offset-background overflow-hidden"
+          >
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-white font-semibold text-sm">
+                {userName.charAt(0).toUpperCase()}
+              </div>
+            )}
+          </motion.button>
+
+          {/* Dropdown Menu */}
+          {showDropdown && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="absolute right-0 mt-2 w-48 rounded-lg bg-card border border-border/50 shadow-xl z-50"
+            >
+              {/* User Info */}
+              <div className="px-4 py-3 border-b border-border/30">
+                <p className="text-sm font-semibold text-foreground">{userName}</p>
+                <p className="text-xs text-muted-foreground">{userEmail}</p>
+              </div>
+
+              {/* Menu Items */}
+              <button
+                onClick={() => {
+                  navigate("/settings");
+                  setShowDropdown(false);
+                }}
+                className="w-full px-4 py-2 text-sm text-foreground hover:bg-muted/50 flex items-center gap-2 transition-colors duration-200"
+              >
+                <Settings className="w-4 h-4" />
+                Settings
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="w-full px-4 py-2 text-sm text-destructive hover:bg-destructive/10 flex items-center gap-2 transition-colors duration-200 border-t border-border/30"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
+            </motion.div>
+          )}
+        </div>
       </div>
     </header>
   );

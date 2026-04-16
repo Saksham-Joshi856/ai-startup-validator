@@ -260,3 +260,95 @@ export async function analyzeAndStoreIdea(ideaId, ideaText, industry) {
         };
     }
 }
+
+/**
+ * Generate AI advisor response for general chat messages
+ * @param message - The user message to respond to
+ * @returns Object containing { response, error }
+ */
+export async function getAdvisorResponse(message) {
+    try {
+        // Validate input
+        if (!message || message.trim().length === 0) {
+            throw new Error('Message cannot be empty');
+        }
+
+        // Get API key from environment variable
+        const apiKey = process.env.OPENROUTER_API_KEY;
+        if (!apiKey) {
+            throw new Error('OPENROUTER_API_KEY environment variable is not set');
+        }
+
+        // Create the system prompt for the AI advisor
+        const systemPrompt = `You are an expert AI Advisor for startup founders and entrepreneurs. You provide:
+- Personalized advice on startup ideas and business strategies
+- Analysis of market opportunities
+- Insights on product-market fit
+- Practical recommendations for business growth
+- Industry trends and competitive insights
+- Tips for fundraising, marketing, and operations
+
+Be conversational, encouraging, and provide actionable insights. Keep responses concise but informative (2-4 sentences).`;
+
+        // Make request to OpenRouter API
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: 'openai/gpt-3.5-turbo',
+                messages: [
+                    {
+                        role: 'system',
+                        content: systemPrompt,
+                    },
+                    {
+                        role: 'user',
+                        content: message,
+                    },
+                ],
+                temperature: 0.8,
+                max_tokens: 300,
+            }),
+        });
+
+        // Check if response is successful
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(
+                `API request failed with status ${response.status}: ${errorData.error?.message || 'Unknown error'}`
+            );
+        }
+
+        // Parse the response
+        const responseData = await response.json();
+
+        // Extract the AI's message
+        if (
+            !responseData.choices ||
+            !responseData.choices[0] ||
+            !responseData.choices[0].message ||
+            !responseData.choices[0].message.content
+        ) {
+            throw new Error('Invalid API response structure');
+        }
+
+        const aiResponse = responseData.choices[0].message.content.trim();
+
+        console.log('✅ AI advisor response generated successfully');
+        return {
+            response: aiResponse,
+            error: null,
+        };
+    } catch (exception) {
+        const errorMessage =
+            exception instanceof Error ? exception.message : 'Unknown error occurred';
+        console.error('Error generating advisor response:', errorMessage);
+        return {
+            response: null,
+            error: errorMessage,
+        };
+    }
+}

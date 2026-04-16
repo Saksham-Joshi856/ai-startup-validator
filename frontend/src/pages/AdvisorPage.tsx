@@ -1,8 +1,12 @@
 import { motion } from "framer-motion";
-import { Bot, Send } from "lucide-react";
+import { Bot, Send, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useAIAdvisor } from "@/hooks/useApiCalls";
 
 export const AdvisorPage = () => {
+    const { user } = useAuth();
+    const { sendMessage, loading } = useAIAdvisor();
     const [messages, setMessages] = useState([
         {
             id: 1,
@@ -13,18 +17,29 @@ export const AdvisorPage = () => {
     ]);
     const [input, setInput] = useState("");
 
-    const handleSendMessage = () => {
-        if (input.trim()) {
-            setMessages([
-                ...messages,
-                {
-                    id: messages.length + 1,
-                    text: input,
-                    sender: "user",
-                    timestamp: new Date(),
-                },
-            ]);
+    const handleSendMessage = async () => {
+        if (input.trim() && user?.id) {
+            // Add user message
+            const userMessage = {
+                id: messages.length + 1,
+                text: input,
+                sender: "user",
+                timestamp: new Date(),
+            };
+            setMessages([...messages, userMessage]);
             setInput("");
+
+            // Get AI response
+            const aiResponse = await sendMessage(user.id, input);
+            if (aiResponse) {
+                const aiMessage = {
+                    id: messages.length + 2,
+                    text: aiResponse,
+                    sender: "ai",
+                    timestamp: new Date(),
+                };
+                setMessages((prev) => [...prev, aiMessage]);
+            }
         }
     };
 
@@ -72,8 +87,8 @@ export const AdvisorPage = () => {
                                 >
                                     <div
                                         className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${msg.sender === "user"
-                                                ? "bg-primary/20 text-primary rounded-br-none"
-                                                : "bg-accent/20 text-accent rounded-bl-none"
+                                            ? "bg-primary/20 text-primary rounded-br-none"
+                                            : "bg-accent/20 text-accent rounded-bl-none"
                                             }`}
                                     >
                                         <p className="text-sm">{msg.text}</p>
@@ -83,6 +98,13 @@ export const AdvisorPage = () => {
                                     </div>
                                 </motion.div>
                             ))}
+                            {loading && (
+                                <div className="flex justify-start">
+                                    <div className="bg-accent/20 text-accent px-4 py-2 rounded-lg rounded-bl-none">
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Input */}
@@ -93,13 +115,15 @@ export const AdvisorPage = () => {
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                                className="flex-1 px-4 py-2 rounded-lg bg-muted/30 border border-border/30 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50 transition-colors"
+                                disabled={loading}
+                                className="flex-1 px-4 py-2 rounded-lg bg-muted/30 border border-border/30 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             />
                             <button
                                 onClick={handleSendMessage}
-                                className="px-4 py-2 rounded-lg bg-accent/20 text-accent hover:bg-accent/30 transition-colors flex items-center gap-2"
+                                disabled={loading}
+                                className="px-4 py-2 rounded-lg bg-accent/20 text-accent hover:bg-accent/30 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Send className="w-4 h-4" />
+                                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                             </button>
                         </div>
                     </motion.div>
@@ -121,7 +145,8 @@ export const AdvisorPage = () => {
                         <button
                             key={i}
                             onClick={() => setInput(action)}
-                            className="px-3 py-1.5 text-xs rounded-lg border border-border/50 text-muted-foreground hover:border-accent/50 hover:text-accent transition-all duration-200"
+                            disabled={loading}
+                            className="px-3 py-1.5 text-xs rounded-lg border border-border/50 text-muted-foreground hover:border-accent/50 hover:text-accent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {action}
                         </button>

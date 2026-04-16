@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
 import { LayoutDashboard } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useDashboardStats } from "@/hooks/useApiCalls";
 import { StatCard } from "@/components/cards/StatCard";
 import { RecentValidations } from "@/components/dashboard/RecentValidations";
 import { InsightsPanel } from "@/components/dashboard/InsightsPanel";
@@ -10,7 +12,7 @@ import { ScoreDistributionChart } from "@/components/charts/ScoreDistributionCha
 import { MarketOpportunityChart } from "@/components/charts/MarketOpportunityChart";
 import { ParticleBackground } from "@/components/dashboard/ParticleBackground";
 import { FloatingActionButton } from "@/components/dashboard/FloatingActionButton";
-import { statsData } from "@/lib/mock-data";
+import { statsData as mockStatsData } from "@/lib/mock-data";
 
 const stagger = {
     hidden: { opacity: 0 },
@@ -18,6 +20,18 @@ const stagger = {
 };
 
 export const DashboardPage = () => {
+    const { user } = useAuth();
+    const { stats, loading } = useDashboardStats(user?.id || null);
+
+    // Transform API stats to StatCard format
+    const displayStats = stats
+        ? [
+            { label: "Total Ideas Analyzed", value: stats.total_ideas || 0, change: "+0%", positive: true, icon: "Lightbulb" as const },
+            { label: "Average Startup Score", value: stats.avg_score || 0, change: "+0%", positive: true, icon: "TrendingUp" as const, suffix: "/100" },
+            { label: "Success Rate", value: stats.success_rate || 0, change: "+0%", positive: true, icon: "CheckCircle" as const, suffix: "%" },
+        ]
+        : mockStatsData.slice(0, 3); // Fallback to mock data
+
     return (
         <>
             {/* Hero Section */}
@@ -48,9 +62,9 @@ export const DashboardPage = () => {
                     variants={stagger}
                     initial="hidden"
                     animate="show"
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"
                 >
-                    {statsData.map((stat, i) => (
+                    {displayStats.map((stat, i) => (
                         <StatCard key={stat.label} {...stat} index={i} />
                     ))}
                 </motion.div>

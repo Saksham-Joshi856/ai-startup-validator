@@ -13,7 +13,7 @@ export interface UseAnalyzeIdeaResult {
         idea: any;
         analysis: any;
     } | null;
-    analyzeIdea: (ideaText: string, industry: string) => Promise<void>;
+    analyzeIdea: (userId: string, ideaText: string, industry: string) => Promise<void>;
     reset: () => void;
 }
 
@@ -22,7 +22,7 @@ export function useAnalyzeIdea(): UseAnalyzeIdeaResult {
     const [error, setError] = useState<string | null>(null);
     const [data, setData] = useState<{ idea: any; analysis: any } | null>(null);
 
-    const analyzeIdea = async (ideaText: string, industry: string) => {
+    const analyzeIdea = async (userId: string, ideaText: string, industry: string) => {
         setIsLoading(true);
         setError(null);
         setData(null);
@@ -34,6 +34,7 @@ export function useAnalyzeIdea(): UseAnalyzeIdeaResult {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
+                    userId,
                     ideaText,
                     industry,
                 }),
