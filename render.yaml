@@ -19,3 +19,7 @@ services:
         sync: false
       - key: PORT
         value: "10000"
+      - key: FRONTEND_URL
+        sync: false
+      - key: PRODUCTION_FRONTEND_URL
+        sync: false

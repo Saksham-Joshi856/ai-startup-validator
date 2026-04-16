@@ -20,8 +20,30 @@ import { getAdvisorResponse } from './services/aiService.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// CORS Configuration with whitelist
+const allowedOrigins = [
+    'http://localhost:5173',      // Local development (Vite)
+    'http://localhost:5000',      // Local backend (for testing)
+    process.env.FRONTEND_URL || 'http://localhost:5173',
+    process.env.PRODUCTION_FRONTEND_URL,
+].filter(Boolean); // Remove undefined entries
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 86400 // 24 hours
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Verify Supabase configuration
@@ -32,6 +54,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
     console.warn('⚠️  Warning: Supabase environment variables not configured.');
     console.warn('Please set SUPABASE_URL and SUPABASE_ANON_KEY in backend/.env');
 }
+
+// Log CORS configuration
+console.log('✅ CORS Configuration:');
+console.log('   Allowed origins:', allowedOrigins);
+console.log('   Credentials enabled: true');
 
 // Health check route
 app.get('/api/test', (req, res) => {
