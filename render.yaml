@@ -2,8 +2,8 @@ services:
   - type: web
     name: ai-startup-validator-backend
     runtime: node
-    buildCommand: cd backend && npm install
-    startCommand: cd backend && node index.js
+    buildCommand: npm run build:all
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -19,13 +19,3 @@ services:
         sync: false
       - key: PORT
         value: "10000"
-
-  - type: static
-    name: ai-startup-validator-frontend
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: frontend/dist
-    routes:
-      - path: /
-        destination: /index.html
-      - path: /*
-        destination: /index.html

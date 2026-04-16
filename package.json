@@ -1,0 +1,15 @@
+{
+    "name": "ai-startup-validator",
+    "version": "1.0.0",
+    "description": "AI Startup Validator - Backend and Frontend",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+        "build:all": "cd backend && npm install && cd ../frontend && npm install && npm run build",
+        "start": "cd backend && node index.js"
+    },
+    "engines": {
+        "node": ">=22.0.0"
+    }
+}
