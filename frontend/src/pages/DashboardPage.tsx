@@ -12,6 +12,8 @@ import { ScoreDistributionChart } from "@/components/charts/ScoreDistributionCha
 import { MarketOpportunityChart } from "@/components/charts/MarketOpportunityChart";
 import { ParticleBackground } from "@/components/dashboard/ParticleBackground";
 import { FloatingActionButton } from "@/components/dashboard/FloatingActionButton";
+import { LoadingTimeout } from "@/components/common/LoadingTimeout";
+import { StatSkeleton, CardSkeleton, TableSkeleton } from "@/components/common/SkeletonLoaders";
 import { statsData as mockStatsData } from "@/lib/mock-data";
 
 const stagger = {
@@ -21,7 +23,7 @@ const stagger = {
 
 export const DashboardPage = () => {
     const { user } = useAuth();
-    const { stats, loading } = useDashboardStats(user?.id || null);
+    const { stats, loading, isTimeout } = useDashboardStats(user?.id || null);
 
     // Transform API stats to StatCard format
     const displayStats = stats
@@ -34,6 +36,9 @@ export const DashboardPage = () => {
 
     return (
         <>
+            {/* Loading Timeout Message */}
+            <LoadingTimeout isVisible={isTimeout && loading} />
+
             {/* Hero Section */}
             <div className="relative px-6 pt-6 pb-2">
                 <ParticleBackground />
@@ -57,17 +62,23 @@ export const DashboardPage = () => {
             </div>
 
             <div className="px-6 pb-8">
-                {/* Stats Grid */}
-                <motion.div
-                    variants={stagger}
-                    initial="hidden"
-                    animate="show"
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"
-                >
-                    {displayStats.map((stat, i) => (
-                        <StatCard key={stat.label} {...stat} index={i} />
-                    ))}
-                </motion.div>
+                {/* Stats Grid - Show skeleton while loading */}
+                {loading && !stats ? (
+                    <div className="mb-6">
+                        <StatSkeleton />
+                    </div>
+                ) : (
+                    <motion.div
+                        variants={stagger}
+                        initial="hidden"
+                        animate="show"
+                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"
+                    >
+                        {displayStats.map((stat, i) => (
+                            <StatCard key={stat.label} {...stat} index={i} />
+                        ))}
+                    </motion.div>
+                )}
 
                 {/* Idea Submission Form */}
                 <div className="mb-8">
@@ -88,7 +99,7 @@ export const DashboardPage = () => {
                 {/* Table + Insights */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
                     <div className="lg:col-span-2">
-                        <RecentValidations />
+                        {loading && !stats ? <TableSkeleton /> : <RecentValidations />}
                     </div>
                     <InsightsPanel />
                 </div>

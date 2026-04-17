@@ -1,13 +1,15 @@
 import { motion } from "framer-motion";
-import { TrendingUp, Loader2 } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useInsights } from "@/hooks/useApiCalls";
 import { IndustryTrendChart } from "@/components/charts/IndustryTrendChart";
 import { MarketOpportunityChart } from "@/components/charts/MarketOpportunityChart";
+import { LoadingTimeout } from "@/components/common/LoadingTimeout";
+import { StatSkeleton } from "@/components/common/SkeletonLoaders";
 
 export const InsightsPage = () => {
     const { user } = useAuth();
-    const { insights, loading } = useInsights(user?.id || null);
+    const { insights, loading, isTimeout } = useInsights(user?.id || null);
 
     const displayInsights = insights || {
         avg_market_score: 72,
@@ -18,6 +20,9 @@ export const InsightsPage = () => {
 
     return (
         <>
+            {/* Loading Timeout Message */}
+            <LoadingTimeout isVisible={isTimeout && loading} />
+
             {/* Hero Section */}
             <div className="relative px-6 pt-6 pb-2">
                 <motion.div
@@ -38,10 +43,8 @@ export const InsightsPage = () => {
 
             {/* Charts Section */}
             <div className="px-6 pb-8">
-                {loading ? (
-                    <div className="flex items-center justify-center py-12">
-                        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                    </div>
+                {loading && !insights ? (
+                    <StatSkeleton />
                 ) : (
                     <>
                         {/* Top Stats */}

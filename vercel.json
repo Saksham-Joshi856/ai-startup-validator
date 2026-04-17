@@ -1,0 +1,17 @@
+{
+    "buildCommand": "cd frontend && npm run build",
+    "outputDirectory": "frontend/dist",
+    "env": {
+        "VITE_SUPABASE_URL": "@vite_supabase_url",
+        "VITE_SUPABASE_ANON_KEY": "@vite_supabase_anon_key",
+        "VITE_BACKEND_URL": "@vite_backend_url",
+        "VITE_OPENROUTER_API_KEY": "@vite_openrouter_api_key",
+        "VITE_SERPAPI_KEY": "@vite_serpapi_key"
+    },
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
+}

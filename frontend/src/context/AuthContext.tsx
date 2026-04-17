@@ -55,10 +55,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         let isMounted = true
+        let initializationTimeout: NodeJS.Timeout
 
         const initializeAuth = async () => {
             try {
                 console.log("🔄 Initializing auth...")
+
+                // Set a safety timeout to prevent infinite loading (10 seconds max)
+                initializationTimeout = setTimeout(() => {
+                    if (isMounted) {
+                        console.warn("⏱️ Auth initialization timeout - proceeding without user")
+                        setLoading(false)
+                    }
+                }, 10000)
 
                 // Check if we're coming back from OAuth redirect
                 const urlHash = window.location.hash
@@ -89,16 +98,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         console.log("❌ No user found in session")
                     }
 
-                    // Set loading to false after a short delay to ensure state is ready
-                    setTimeout(() => {
-                        if (isMounted) {
-                            console.log("✅ Auth initialization complete")
-                            setLoading(false)
-                        }
-                    }, 500)
+                    // Clear the timeout and set loading to false
+                    clearTimeout(initializationTimeout)
+                    console.log("✅ Auth initialization complete")
+                    setLoading(false)
                 }
             } catch (error) {
                 console.error("❌ Auth initialization error:", error)
+                clearTimeout(initializationTimeout)
                 if (isMounted) {
                     setLoading(false)
                 }
@@ -130,6 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         return () => {
             isMounted = false
+            clearTimeout(initializationTimeout)
             subscription?.unsubscribe()
         }
     }, [])

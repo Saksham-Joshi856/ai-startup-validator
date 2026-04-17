@@ -1,17 +1,22 @@
 import { motion } from "framer-motion";
-import { FileText, Loader2 } from "lucide-react";
+import { FileText } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetIdeas, useGetAnalysis } from "@/hooks/useApiCalls";
+import { LoadingTimeout } from "@/components/common/LoadingTimeout";
+import { CardSkeleton } from "@/components/common/SkeletonLoaders";
 
 export const ReportsPage = () => {
     const { user } = useAuth();
-    const { ideas, loading } = useGetIdeas(user?.id || null);
+    const { ideas, loading, isTimeout } = useGetIdeas(user?.id || null);
     const [selectedIdea, setSelectedIdea] = useState<string | null>(null);
     const { analysis } = useGetAnalysis(selectedIdea);
 
     return (
         <>
+            {/* Loading Timeout Message */}
+            <LoadingTimeout isVisible={isTimeout && loading} />
+
             {/* Hero Section */}
             <div className="relative px-6 pt-6 pb-2">
                 <motion.div
@@ -35,10 +40,8 @@ export const ReportsPage = () => {
 
             {/* Reports Grid */}
             <div className="px-6 pb-8">
-                {loading ? (
-                    <div className="flex items-center justify-center py-12">
-                        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                    </div>
+                {loading && !ideas.length ? (
+                    <CardSkeleton />
                 ) : ideas.length > 0 ? (
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -65,7 +68,7 @@ export const ReportsPage = () => {
                                         {analysis && (
                                             <>
                                                 <div className="text-2xl font-bold text-primary mb-1">
-                                                    {((analysis.market_score || 0) + (analysis.competition_score || 0) + (analysis.feasibility_score || 0)) / 3.0}.toFixed(1)
+                                                    {(((analysis.market_score || 0) + (analysis.competition_score || 0) + (analysis.feasibility_score || 0)) / 3.0).toFixed(1)}
                                                 </div>
                                                 <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-green-500/20 text-green-600">
                                                     Analyzed

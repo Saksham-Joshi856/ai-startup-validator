@@ -19,6 +19,28 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
+  build: {
+    // Code splitting for better performance
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui': ['framer-motion', 'lucide-react'],
+          'query': ['@tanstack/react-query'],
+          'supabase': ['@supabase/supabase-js'],
+        },
+      },
+    },
+    // Optimize chunk size warnings
+    chunkSizeWarningLimit: 600,
+    // Enable minification
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true, // Remove console logs in production
+      },
+    },
+  },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
     alias: {
