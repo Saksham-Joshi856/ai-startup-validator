@@ -1,7 +1,6 @@
 import React, { createContext, useEffect, useState } from "react"
 import { User } from "@supabase/supabase-js"
 import { supabase } from "@/lib/supabaseClient"
-import { createUserProfile } from "@/lib/profileService"
 
 interface AuthContextType {
     user: User | null
@@ -19,39 +18,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null)
     const [loading, setLoading] = useState(true)
 
-    // Helper function to ensure user profile exists
-    const ensureUserProfile = async (userId: string, email: string) => {
-        try {
-            console.log("🔍 Checking profile for user:", email)
-
-            // Check if profile already exists
-            const { data: existingProfile, error: checkError } = await supabase
-                .from("profiles")
-                .select("id")
-                .eq("id", userId)
-                .maybeSingle()
-
-            if (checkError && checkError.code !== "PGRST116") {
-                console.error("❌ Error checking profile:", checkError)
-                return
-            }
-
-            // If profile doesn't exist, create it
-            if (!existingProfile) {
-                console.log("📝 Creating new profile for:", email)
-                const { data, error } = await createUserProfile(userId, email)
-                if (error) {
-                    console.error("❌ Error creating profile:", error)
-                } else {
-                    console.log("✅ User profile created successfully for:", email)
-                }
-            } else {
-                console.log("✅ User profile already exists for:", email)
-            }
-        } catch (error) {
-            console.error("❌ Exception in ensureUserProfile:", error)
-        }
-    }
 
     useEffect(() => {
         let isMounted = true
@@ -90,10 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 if (isMounted) {
                     setUser(currentUser)
 
-                    // Create profile for user if they don't have one yet
                     if (currentUser) {
                         console.log("👤 User found:", currentUser.email)
-                        await ensureUserProfile(currentUser.id, currentUser.email || "")
                     } else {
                         console.log("❌ No user found in session")
                     }
@@ -125,14 +89,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
 
             console.log("📋 Event:", event, "| User Email:", currentUser?.email || "none")
-
-            // Create user profile on auth state change if user exists
-            if (currentUser) {
-                console.log("👤 Processing user from auth event:", currentUser.email)
-                await ensureUserProfile(currentUser.id, currentUser.email || "")
-            } else {
-                console.log("ℹ️ Auth event had no user")
-            }
         })
 
         return () => {

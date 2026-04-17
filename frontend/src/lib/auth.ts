@@ -1,5 +1,4 @@
 import { supabase } from "./supabaseClient"
-import { createUserProfile } from "./profileService"
 
 export const signUp = async (email: string, password: string, fullName?: string) => {
     try {
@@ -16,16 +15,6 @@ export const signUp = async (email: string, password: string, fullName?: string)
         if (error) {
             console.error("Sign up error:", error)
             return { data: null, error }
-        }
-
-        // Create user profile after successful sign up
-        if (data?.user?.id) {
-            const profileResult = await createUserProfile(data.user.id, email)
-            if (profileResult.error) {
-                console.error("Profile creation failed, but user was created:", profileResult.error)
-                // Still return user data even if profile creation fails
-                return { data, error: null }
-            }
         }
 
         return { data, error: null }
