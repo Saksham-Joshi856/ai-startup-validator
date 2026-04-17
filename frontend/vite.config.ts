@@ -28,18 +28,25 @@ export default defineConfig(({ mode }) => ({
           'ui': ['framer-motion', 'lucide-react'],
           'query': ['@tanstack/react-query'],
           'supabase': ['@supabase/supabase-js'],
+          'charts': ['recharts'],
         },
       },
     },
     // Optimize chunk size warnings
-    chunkSizeWarningLimit: 600,
-    // Enable minification
+    chunkSizeWarningLimit: 800,
+    // Enable minification with aggressive optimization
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true, // Remove console logs in production
+        drop_console: true,
+        drop_debugger: true,
       },
+      mangle: true,
     },
+    // CSS minification
+    cssMinify: true,
+    // Suppress warnings for large chunks
+    reportCompressedSize: false,
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

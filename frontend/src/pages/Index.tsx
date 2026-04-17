@@ -6,7 +6,7 @@ import { IdeaSubmissionForm } from "@/components/dashboard/IdeaSubmissionForm";
 import { IdeasList } from "@/components/dashboard/IdeasList";
 import { IndustryTrendChart } from "@/components/charts/IndustryTrendChart";
 import { ScoreDistributionChart } from "@/components/charts/ScoreDistributionChart";
-import { MarketOpportunityChart } from "@/components/charts/MarketOpportunityChart";
+import { LazyMarketOpportunityChart } from "@/components/charts/LazyMarketOpportunityChart";
 import { ParticleBackground } from "@/components/dashboard/ParticleBackground";
 import { FloatingActionButton } from "@/components/dashboard/FloatingActionButton";
 import { statsData } from "@/lib/mock-data";
@@ -79,7 +79,7 @@ const Index = () => {
 
         {/* Market Opportunity */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <MarketOpportunityChart />
+          <LazyMarketOpportunityChart />
         </div>
       </div>
 

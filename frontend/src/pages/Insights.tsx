@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { TrendingUp } from "lucide-react";
 import { IndustryTrendChart } from "@/components/charts/IndustryTrendChart";
-import { MarketOpportunityChart } from "@/components/charts/MarketOpportunityChart";
+import { LazyMarketOpportunityChart } from "@/components/charts/LazyMarketOpportunityChart";
 
 const Insights = () => {
     return (
@@ -34,7 +34,7 @@ const Insights = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                 >
-                    <MarketOpportunityChart />
+                    <LazyMarketOpportunityChart />
                 </motion.div>
             </div>
         </div>

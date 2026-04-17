@@ -3,7 +3,7 @@ import { TrendingUp } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useInsights } from "@/hooks/useApiCalls";
 import { IndustryTrendChart } from "@/components/charts/IndustryTrendChart";
-import { MarketOpportunityChart } from "@/components/charts/MarketOpportunityChart";
+import { LazyMarketOpportunityChart } from "@/components/charts/LazyMarketOpportunityChart";
 import { LoadingTimeout } from "@/components/common/LoadingTimeout";
 import { StatSkeleton } from "@/components/common/SkeletonLoaders";
 
@@ -89,7 +89,7 @@ export const InsightsPage = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.15, duration: 0.5 }}
                             >
-                                <MarketOpportunityChart />
+                                <LazyMarketOpportunityChart />
                             </motion.div>
                         </div>
 
