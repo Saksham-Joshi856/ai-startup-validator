@@ -11,13 +11,13 @@ import { SuspenseFallback } from "@/components/common/SkeletonLoaders";
 import AuthPage from "@/pages/AuthPage";
 
 // Lazy load pages for better code splitting
-const DashboardPage = lazy(() => import("@/pages/DashboardPage").then(m => ({ default: m.DashboardPage || m.default })));
-const ValidateIdeaPage = lazy(() => import("@/pages/ValidateIdeaPage").then(m => ({ default: m.default })));
-const ReportsPage = lazy(() => import("@/pages/ReportsPage").then(m => ({ default: m.default })));
-const InsightsPage = lazy(() => import("@/pages/InsightsPage").then(m => ({ default: m.default })));
-const AdvisorPage = lazy(() => import("@/pages/AdvisorPage").then(m => ({ default: m.default })));
-const SettingsPage = lazy(() => import("@/pages/SettingsPage").then(m => ({ default: m.default })));
-const NotFound = lazy(() => import("@/pages/NotFound").then(m => ({ default: m.default })));
+const DashboardPage = lazy(() => import("@/pages/DashboardPage"));
+const ValidateIdeaPage = lazy(() => import("@/pages/ValidateIdeaPage"));
+const ReportsPage = lazy(() => import("@/pages/ReportsPage"));
+const InsightsPage = lazy(() => import("@/pages/InsightsPage"));
+const AdvisorPage = lazy(() => import("@/pages/AdvisorPage"));
+const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
 
 // Optimize query client for better performance
 const queryClient = new QueryClient({
@@ -48,8 +48,8 @@ function ProtectedDashboard() {
 
   // If user logged in → show Dashboard with all features
   return (
-    <DashboardLayout>
-      <Routes>
+    <Routes>
+      <Route element={<DashboardLayout />}>
         <Route
           path="/"
           element={
@@ -99,8 +99,8 @@ function ProtectedDashboard() {
           }
         />
         <Route path="*" element={<NotFound />} />
-      </Routes>
-    </DashboardLayout>
+      </Route>
+    </Routes>
   );
 }
 
