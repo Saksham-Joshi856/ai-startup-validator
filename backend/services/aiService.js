@@ -262,11 +262,12 @@ export async function analyzeAndStoreIdea(ideaId, ideaText, industry) {
 }
 
 /**
- * Generate AI advisor response for general chat messages
+ * Generate AI advisor response for general chat messages with startup mentorship context
  * @param message - The user message to respond to
+ * @param context - Optional context object with pastIdeas, latestAnalysis, and industry
  * @returns Object containing { response, error }
  */
-export async function getAdvisorResponse(message) {
+export async function getAdvisorResponse(message, context = {}) {
     try {
         // Validate input
         if (!message || message.trim().length === 0) {
@@ -279,16 +280,50 @@ export async function getAdvisorResponse(message) {
             throw new Error('OPENROUTER_API_KEY environment variable is not set');
         }
 
-        // Create the system prompt for the AI advisor
-        const systemPrompt = `You are an expert AI Advisor for startup founders and entrepreneurs. You provide:
-- Personalized advice on startup ideas and business strategies
-- Analysis of market opportunities
-- Insights on product-market fit
-- Practical recommendations for business growth
-- Industry trends and competitive insights
-- Tips for fundraising, marketing, and operations
+        // Build context information for the mentor
+        let contextSection = '';
+        if (context) {
+            if (context.industry) {
+                contextSection += `\nUser's Focus Industry: ${context.industry}`;
+            }
+            if (context.pastIdeas && context.pastIdeas.length > 0) {
+                contextSection += `\nPast Startup Ideas Analyzed: ${context.pastIdeas.length}`;
+                contextSection += context.pastIdeas
+                    .slice(0, 3)
+                    .map((idea) => `\n- ${idea.title || idea.description || 'Untitled'} (${idea.industry})`)
+                    .join('');
+            }
+            if (context.latestAnalysis) {
+                contextSection += `\nLatest Analysis Scores:
+- Market Potential: ${context.latestAnalysis.market_score}/100
+- Competition: ${context.latestAnalysis.competition_score}/100
+- Feasibility: ${context.latestAnalysis.feasibility_score}/100`;
+            }
+        }
 
-Be conversational, encouraging, and provide actionable insights. Keep responses concise but informative (2-4 sentences).`;
+        // Create the system prompt for the AI mentor
+        const systemPrompt = `You are an experienced Startup Mentor helping founders validate ideas, improve business models, and identify risks.
+
+${contextSection ? `User Context:${contextSection}` : ''}
+
+Your role:
+- Help founders validate their startup ideas with realistic feedback
+- Provide actionable, specific advice based on their industry and past ideas
+- Identify potential risks and market challenges
+- Offer strategic guidance on business models and go-to-market strategies
+- Focus on practical, implementable recommendations
+
+Guidelines for responses:
+- Use bullet points for clarity and readability
+- Be realistic and mention potential risks, don't provide generic praise
+- Reference their specific industry and context when relevant
+- Provide 3-5 specific, actionable recommendations per response
+- Avoid hallucinating market data - acknowledge limitations
+- Focus on what they can do TODAY to validate their idea
+- Be encouraging but honest about market challenges
+
+Response format:
+Use bullet points and numbered lists for structured advice. Keep responses focused and practical.`;
 
         // Make request to OpenRouter API
         const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -309,8 +344,8 @@ Be conversational, encouraging, and provide actionable insights. Keep responses 
                         content: message,
                     },
                 ],
-                temperature: 0.8,
-                max_tokens: 300,
+                temperature: 0.7,
+                max_tokens: 500,
             }),
         });
 
@@ -337,7 +372,7 @@ Be conversational, encouraging, and provide actionable insights. Keep responses 
 
         const aiResponse = responseData.choices[0].message.content.trim();
 
-        console.log('✅ AI advisor response generated successfully');
+        console.log('✅ AI mentor response generated successfully');
         return {
             response: aiResponse,
             error: null,
@@ -345,7 +380,7 @@ Be conversational, encouraging, and provide actionable insights. Keep responses 
     } catch (exception) {
         const errorMessage =
             exception instanceof Error ? exception.message : 'Unknown error occurred';
-        console.error('Error generating advisor response:', errorMessage);
+        console.error('Error generating mentor response:', errorMessage);
         return {
             response: null,
             error: errorMessage,

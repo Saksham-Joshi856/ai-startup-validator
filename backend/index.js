@@ -12,10 +12,11 @@ import express from 'express';
 import cors from 'cors';
 
 // Import services (now .env is loaded)
-import { getAllStartupIdeas } from './services/ideaService.js';
+import { getAllStartupIdeas, getUserStartupIdeas } from './services/ideaService.js';
 import { getIdeaAnalysis } from './services/analysisService.js';
 import { createAndAnalyzeIdea } from './services/ideaPipelineService.js';
 import { getAdvisorResponse } from './services/aiService.js';
+import { getSupabaseClient } from './config/supabaseClient.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -286,7 +287,7 @@ app.get('/api/dashboard-stats', async (req, res) => {
     }
 });
 
-// POST /api/ai-advisor - Chat with AI advisor
+// POST /api/ai-advisor - Chat with AI advisor (Startup Mentor)
 app.post('/api/ai-advisor', async (req, res) => {
     try {
         const { userId, message } = req.body;
@@ -298,11 +299,59 @@ app.post('/api/ai-advisor', async (req, res) => {
             });
         }
 
-        // Call AI service to generate advisor response
-        const result = await getAdvisorResponse(message);
+        // Fetch user context for the mentor
+        let context = {};
+
+        try {
+            const supabase = getSupabaseClient();
+
+            // Get user's past ideas
+            const { data: ideasData } = await supabase
+                .from('startup_ideas')
+                .select('id, description, industry, created_at')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false })
+                .limit(5);
+
+            if (ideasData && ideasData.length > 0) {
+                context.pastIdeas = ideasData.map(idea => ({
+                    id: idea.id,
+                    title: idea.description?.split('\n')[0]?.substring(0, 50) || 'Untitled',
+                    description: idea.description,
+                    industry: idea.industry,
+                    created_at: idea.created_at,
+                }));
+
+                // Get latest analysis for context
+                if (ideasData[0]) {
+                    const { data: analysisData } = await supabase
+                        .from('idea_analysis')
+                        .select('market_score, competition_score, feasibility_score, analysis_text')
+                        .eq('idea_id', ideasData[0].id)
+                        .single();
+
+                    if (analysisData) {
+                        context.latestAnalysis = {
+                            market_score: analysisData.market_score,
+                            competition_score: analysisData.competition_score,
+                            feasibility_score: analysisData.feasibility_score,
+                        };
+                    }
+
+                    // Get industry from latest idea
+                    context.industry = ideasData[0].industry;
+                }
+            }
+        } catch (contextError) {
+            console.warn('Warning: Could not fetch user context:', contextError.message);
+            // Continue without context if fetch fails
+        }
+
+        // Call AI service to generate mentor response with context
+        const result = await getAdvisorResponse(message, context);
 
         if (result.error) {
-            console.error('Error generating advisor response:', result.error);
+            console.error('Error generating mentor response:', result.error);
             return res.status(500).json({
                 success: false,
                 error: result.error,
