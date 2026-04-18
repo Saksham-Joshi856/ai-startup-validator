@@ -387,3 +387,146 @@ Use bullet points and numbered lists for structured advice. Keep responses focus
         };
     }
 }
+
+/**
+ * Generate smart suggestions for a user based on their idea history
+ * @param context - Context object with pastIdeas, latestAnalysis, and industry
+ * @returns Object containing { suggestions: [], error }
+ */
+export async function generateSmartSuggestions(context = {}) {
+    try {
+        // Validate we have some context
+        if (!context || Object.keys(context).length === 0) {
+            return {
+                suggestions: [
+                    { text: "Create your first startup idea", type: "primary", icon: "Lightbulb" },
+                    { text: "Explore ideas in your industry", type: "secondary", icon: "Compass" },
+                    { text: "Learn validation tips", type: "secondary", icon: "BookOpen" },
+                ],
+                error: null,
+            };
+        }
+
+        // Get API key
+        const apiKey = process.env.OPENROUTER_API_KEY;
+        if (!apiKey) {
+            throw new Error('OPENROUTER_API_KEY environment variable is not set');
+        }
+
+        // Build context summary
+        let contextSummary = '';
+        if (context.industry) {
+            contextSummary += `\nFocus Industry: ${context.industry}`;
+        }
+        if (context.pastIdeas && context.pastIdeas.length > 0) {
+            contextSummary += `\nIdeas Analyzed: ${context.pastIdeas.length}`;
+            contextSummary += context.pastIdeas
+                .slice(0, 3)
+                .map((idea) => `\n- ${idea.title || 'Untitled'} (${idea.industry})`)
+                .join('');
+        }
+        if (context.latestAnalysis) {
+            const scores = context.latestAnalysis;
+            contextSummary += `\nLatest Scores: Market=${scores.market_score}, Competition=${scores.competition_score}, Feasibility=${scores.feasibility_score}`;
+        }
+
+        // Create prompt for suggestion generation
+        const systemPrompt = `You are a startup mentor generating actionable, personalized suggestions for founders. 
+Generate 3 smart suggestions that guide the user to their next action.
+
+Suggestions should be:
+- Specific to their industry and past ideas
+- Actionable (something they can do now)
+- Encouraging and helpful
+- Short (under 50 chars per suggestion)
+
+Return ONLY a valid JSON array with no markdown or code blocks:
+[
+  { "text": "suggestion text", "type": "primary|secondary|tertiary", "icon": "IconName" },
+  ...
+]
+
+Icon names: Lightbulb, TrendingUp, Target, Zap, CheckCircle, AlertCircle, Compass, BookOpen, BarChart3`;
+
+        const userPrompt = `Based on this founder's context, generate 3 smart suggestions:
+${contextSummary}
+
+Examples:
+- "Try validating a FinTech idea"
+- "Your last idea had low feasibility — improve it"
+- "Explore SaaS opportunities in your industry"
+
+Generate 3 unique, actionable suggestions as JSON array.`;
+
+        // Call OpenRouter API
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: 'openai/gpt-3.5-turbo',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt },
+                ],
+                temperature: 0.7,
+                max_tokens: 300,
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`API failed: ${response.status}`);
+        }
+
+        const responseData = await response.json();
+        const content = responseData.choices?.[0]?.message?.content?.trim();
+
+        if (!content) {
+            throw new Error('No response from AI');
+        }
+
+        // Parse suggestions (handle markdown code blocks)
+        const cleanContent = content
+            .replace(/^```json\s*/i, '')
+            .replace(/```\s*$/, '')
+            .trim();
+
+        let suggestions = JSON.parse(cleanContent);
+
+        // Validate and ensure 3 suggestions
+        suggestions = Array.isArray(suggestions) ? suggestions : [];
+        if (suggestions.length === 0) {
+            throw new Error('No suggestions generated');
+        }
+
+        // Ensure each suggestion has required fields
+        suggestions = suggestions.slice(0, 3).map((s) => ({
+            text: s.text || 'Try a new idea',
+            type: ['primary', 'secondary', 'tertiary'].includes(s.type) ? s.type : 'secondary',
+            icon: s.icon || 'Lightbulb',
+        }));
+
+        console.log('✅ Smart suggestions generated successfully');
+        return {
+            suggestions,
+            error: null,
+        };
+    } catch (exception) {
+        const errorMessage =
+            exception instanceof Error ? exception.message : 'Unknown error occurred';
+        console.error('Error generating suggestions:', errorMessage);
+
+        // Return fallback suggestions on error
+        return {
+            suggestions: [
+                { text: "Validate a new idea", type: "primary", icon: "Lightbulb" },
+                { text: "Review past analyses", type: "secondary", icon: "BarChart3" },
+                { text: "Get mentor advice", type: "tertiary", icon: "BookOpen" },
+            ],
+            error: null, // Return error gracefully
+        };
+    }
+}

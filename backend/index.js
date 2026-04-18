@@ -15,7 +15,7 @@ import cors from 'cors';
 import { getAllStartupIdeas, getUserStartupIdeas } from './services/ideaService.js';
 import { getIdeaAnalysis } from './services/analysisService.js';
 import { createAndAnalyzeIdea } from './services/ideaPipelineService.js';
-import { getAdvisorResponse } from './services/aiService.js';
+import { getAdvisorResponse, generateSmartSuggestions } from './services/aiService.js';
 import { getSupabaseClient } from './config/supabaseClient.js';
 
 const app = express();
@@ -371,18 +371,185 @@ app.post('/api/ai-advisor', async (req, res) => {
     }
 });
 
+// GET /api/smart-suggestions - Generate personalized suggestions for dashboard
+app.get('/api/smart-suggestions', async (req, res) => {
+    try {
+        const { userId } = req.query;
+
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required query parameter: userId',
+            });
+        }
+
+        // Fetch user context
+        let context = {};
+
+        try {
+            const supabase = getSupabaseClient();
+
+            // Get user's past ideas
+            const { data: ideasData } = await supabase
+                .from('startup_ideas')
+                .select('id, description, industry, created_at')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false })
+                .limit(5);
+
+            if (ideasData && ideasData.length > 0) {
+                context.pastIdeas = ideasData.map(idea => ({
+                    id: idea.id,
+                    title: idea.description?.split('\n')[0]?.substring(0, 50) || 'Untitled',
+                    description: idea.description,
+                    industry: idea.industry,
+                    created_at: idea.created_at,
+                }));
+
+                // Get latest analysis for context
+                if (ideasData[0]) {
+                    const { data: analysisData } = await supabase
+                        .from('idea_analysis')
+                        .select('market_score, competition_score, feasibility_score')
+                        .eq('idea_id', ideasData[0].id)
+                        .single();
+
+                    if (analysisData) {
+                        context.latestAnalysis = {
+                            market_score: analysisData.market_score,
+                            competition_score: analysisData.competition_score,
+                            feasibility_score: analysisData.feasibility_score,
+                        };
+                    }
+
+                    // Get industry from latest idea
+                    context.industry = ideasData[0].industry;
+                }
+            }
+        } catch (contextError) {
+            console.warn('Warning: Could not fetch user context for suggestions:', contextError.message);
+            // Continue without context if fetch fails
+        }
+
+        // Generate suggestions
+        const result = await generateSmartSuggestions(context);
+
+        res.json({
+            success: true,
+            suggestions: result.suggestions || [],
+            timestamp: new Date().toISOString(),
+        });
+    } catch (error) {
+        console.error('Error in smart-suggestions endpoint:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Internal server error',
+            suggestions: [
+                { text: "Validate a new idea", type: "primary", icon: "Lightbulb" },
+                { text: "Review past analyses", type: "secondary", icon: "BarChart3" },
+                { text: "Get mentor advice", type: "tertiary", icon: "BookOpen" },
+            ],
+        });
+    }
+});
+
+// POST /api/ai-advisor - Chat with AI advisor (Startup Mentor)
+app.post('/api/ai-advisor', async (req, res) => {
+    try {
+        const { userId, message } = req.body;
+
+        if (!userId || !message) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields: userId or message',
+            });
+        }
+
+        // Fetch user context for the mentor
+        let context = {};
+
+        try {
+            const supabase = getSupabaseClient();
+
+            // Get user's past ideas
+            const { data: ideasData } = await supabase
+                .from('startup_ideas')
+                .select('id, description, industry, created_at')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false })
+                .limit(5);
+
+            if (ideasData && ideasData.length > 0) {
+                context.pastIdeas = ideasData.map(idea => ({
+                    id: idea.id,
+                    title: idea.description?.split('\n')[0]?.substring(0, 50) || 'Untitled',
+                    description: idea.description,
+                    industry: idea.industry,
+                    created_at: idea.created_at,
+                }));
+
+                // Get latest analysis for context
+                if (ideasData[0]) {
+                    const { data: analysisData } = await supabase
+                        .from('idea_analysis')
+                        .select('market_score, competition_score, feasibility_score, analysis_text')
+                        .eq('idea_id', ideasData[0].id)
+                        .single();
+
+                    if (analysisData) {
+                        context.latestAnalysis = {
+                            market_score: analysisData.market_score,
+                            competition_score: analysisData.competition_score,
+                            feasibility_score: analysisData.feasibility_score,
+                        };
+                    }
+
+                    // Get industry from latest idea
+                    context.industry = ideasData[0].industry;
+                }
+            }
+        } catch (contextError) {
+            console.warn('Warning: Could not fetch user context:', contextError.message);
+            // Continue without context if fetch fails
+        }
+
+        // Call AI service to generate mentor response with context
+        const result = await getAdvisorResponse(message, context);
+
+        if (result.error) {
+            console.error('Error generating mentor response:', result.error);
+            return res.status(500).json({
+                success: false,
+                error: result.error,
+            });
+        }
+
+        res.json({
+            success: true,
+            data: {
+                response: result.response,
+            },
+            timestamp: new Date().toISOString(),
+        });
+    } catch (error) {
+        console.error('Error in ai-advisor endpoint:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
 // Start server
 app.listen(PORT, () => {
     console.log(`Backend server running on http://localhost:${PORT}`);
     console.log(`Test endpoint: http://localhost:${PORT}/api/test`);
     console.log(`\nAvailable endpoints:`);
-    console.log(`  GET  /api/test                    - Health check`);
-    console.log(`  GET  /api/getIdeas                - Fetch all startup ideas`);
-    console.log(`  GET  /api/get-ideas?userId=...    - Fetch ideas for user`);
-    console.log(`  GET  /api/getAnalysis?ideaId=...  - Fetch idea analysis`);
-    console.log(`  GET  /api/get-analysis?ideaId=... - Fetch analysis for idea`);
-    console.log(`  POST /api/analyzeIdea             - Create and analyze an idea`);
-    console.log(`  GET  /api/insights?userId=...     - Get user insights`);
-    console.log(`  GET  /api/dashboard-stats?userId=... - Get dashboard stats`);
-    console.log(`  POST /api/ai-advisor              - Chat with AI advisor`);
+    console.log(`  GET  /api/test                      - Health check`);
+    console.log(`  GET  /api/getIdeas                  - Fetch all startup ideas`);
+    console.log(`  GET  /api/get-ideas?userId=...      - Fetch ideas for user`);
+    console.log(`  GET  /api/getAnalysis?ideaId=...    - Fetch idea analysis`);
+    console.log(`  GET  /api/get-analysis?ideaId=...   - Fetch analysis for idea`);
+    console.log(`  POST /api/analyzeIdea               - Create and analyze an idea`);
+    console.log(`  GET  /api/insights?userId=...       - Get user insights`);
+    console.log(`  GET  /api/dashboard-stats?userId=...  - Get dashboard stats`);
+    console.log(`  GET  /api/smart-suggestions?userId=... - Get smart suggestions for dashboard`);
+    console.log(`  POST /api/ai-advisor                - Chat with AI advisor`);
 });

@@ -6,6 +6,7 @@ import { StatCard } from "@/components/cards/StatCard";
 import { RecentValidations } from "@/components/dashboard/RecentValidations";
 import { InsightsPanel } from "@/components/dashboard/InsightsPanel";
 import { IdeaSubmissionForm } from "@/components/dashboard/IdeaSubmissionForm";
+import { SmartSuggestionCards } from "@/components/dashboard/SmartSuggestionCards";
 import { IdeasList } from "@/components/dashboard/IdeasList";
 import { IndustryTrendChart } from "@/components/charts/IndustryTrendChart";
 import { ScoreDistributionChart } from "@/components/charts/ScoreDistributionChart";
@@ -79,6 +80,9 @@ export const DashboardPage = () => {
                         ))}
                     </motion.div>
                 )}
+
+                {/* Smart Suggestion Cards */}
+                <SmartSuggestionCards userId={user?.id || null} />
 
                 {/* Idea Submission Form */}
                 <div className="mb-8">
