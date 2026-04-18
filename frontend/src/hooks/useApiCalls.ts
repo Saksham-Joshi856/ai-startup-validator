@@ -20,45 +20,45 @@ export function useGetIdeas(userId: string | null) {
     const [error, setError] = useState<string | null>(null);
     const [isTimeout, setIsTimeout] = useState(false);
 
-    useEffect(() => {
+    const fetchIdeas = async () => {
         if (!userId) return;
 
-        const fetchIdeas = async () => {
-            setLoading(true);
-            setError(null);
-            setIsTimeout(false);
+        setLoading(true);
+        setError(null);
+        setIsTimeout(false);
 
-            const timeoutId = setTimeout(() => {
-                setIsTimeout(true);
-                setLoading(false);
-            }, API_TIMEOUT_MS);
+        const timeoutId = setTimeout(() => {
+            setIsTimeout(true);
+            setLoading(false);
+        }, API_TIMEOUT_MS);
 
-            try {
-                const response = await ideaApi.getIdeas(userId);
-                clearTimeout(timeoutId);
-                if (response.success) {
-                    setIdeas(response.data || []);
-                    setIsTimeout(false);
-                } else {
-                    setError(response.error || 'Failed to fetch ideas');
-                }
-            } catch (err) {
-                clearTimeout(timeoutId);
-                if (isTimeoutError(err)) {
-                    setIsTimeout(true);
-                    setError('Server is slow. Data will load when ready.');
-                } else {
-                    setError(err instanceof Error ? err.message : 'Unknown error');
-                }
-            } finally {
-                setLoading(false);
+        try {
+            const response = await ideaApi.getIdeas(userId);
+            clearTimeout(timeoutId);
+            if (response.success) {
+                setIdeas(response.data || []);
+                setIsTimeout(false);
+            } else {
+                setError(response.error || 'Failed to fetch ideas');
             }
-        };
+        } catch (err) {
+            clearTimeout(timeoutId);
+            if (isTimeoutError(err)) {
+                setIsTimeout(true);
+                setError('Server is slow. Data will load when ready.');
+            } else {
+                setError(err instanceof Error ? err.message : 'Unknown error');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchIdeas();
     }, [userId]);
 
-    return { ideas, loading, error, isTimeout, refetch: () => userId && ideaApi.getIdeas(userId) };
+    return { ideas, loading, error, isTimeout, refetch: fetchIdeas };
 }
 
 // ============================================================================

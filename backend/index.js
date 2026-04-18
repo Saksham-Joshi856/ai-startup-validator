@@ -172,6 +172,74 @@ app.post('/api/analyzeIdea', async (req, res) => {
     }
 });
 
+// POST /api/reanalyzeIdea - Re-analyze an existing idea
+app.post('/api/reanalyzeIdea', async (req, res) => {
+    try {
+        if (!supabaseUrl || !supabaseAnonKey) {
+            return res.status(503).json({
+                success: false,
+                error: 'Database not configured. Please set Supabase environment variables.',
+            });
+        }
+
+        const { ideaId, userId } = req.body;
+
+        if (!ideaId || !userId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields: ideaId or userId',
+            });
+        }
+
+        // Fetch the idea from database
+        const supabase = getSupabaseClient();
+        const { data: ideaData, error: ideaError } = await supabase
+            .from('startup_ideas')
+            .select('id, idea_text, description, industry, user_id')
+            .eq('id', ideaId)
+            .single();
+
+        if (ideaError || !ideaData) {
+            return res.status(404).json({
+                success: false,
+                error: 'Idea not found',
+            });
+        }
+
+        // Verify ownership
+        if (ideaData.user_id !== userId) {
+            return res.status(403).json({
+                success: false,
+                error: 'Unauthorized: You can only re-analyze your own ideas',
+            });
+        }
+
+        // Re-analyze the idea
+        const ideaText = ideaData.description || ideaData.idea_text;
+        const industry = ideaData.industry;
+
+        const { analyzeAndStoreIdea } = await import('./services/analysisService.js');
+        const result = await analyzeAndStoreIdea(ideaId, ideaText, industry);
+
+        if (result.error) {
+            console.error('Error in re-analysis pipeline:', result.error);
+            return res.status(500).json({
+                success: false,
+                error: result.error,
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Idea re-analyzed successfully',
+            analysis: result.data,
+        });
+    } catch (error) {
+        console.error('Error in reanalyzeIdea endpoint:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
 // GET /api/get-ideas - Fetch ideas for specific user
 app.get('/api/get-ideas', async (req, res) => {
     try {
@@ -548,6 +616,7 @@ app.listen(PORT, () => {
     console.log(`  GET  /api/getAnalysis?ideaId=...    - Fetch idea analysis`);
     console.log(`  GET  /api/get-analysis?ideaId=...   - Fetch analysis for idea`);
     console.log(`  POST /api/analyzeIdea               - Create and analyze an idea`);
+    console.log(`  POST /api/reanalyzeIdea             - Re-analyze an existing idea`);
     console.log(`  GET  /api/insights?userId=...       - Get user insights`);
     console.log(`  GET  /api/dashboard-stats?userId=...  - Get dashboard stats`);
     console.log(`  GET  /api/smart-suggestions?userId=... - Get smart suggestions for dashboard`);
