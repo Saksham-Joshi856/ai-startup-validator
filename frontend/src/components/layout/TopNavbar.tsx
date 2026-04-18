@@ -18,7 +18,7 @@ export function TopNavbar() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    // Auth state change will automatically show AuthPage
+    navigate("/");
   };
 
   return (

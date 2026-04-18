@@ -1,11 +1,13 @@
 import { motion } from "framer-motion";
 import { Settings, Bell, Shield, Moon, Globe, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabaseClient";
 import { useTheme } from "@/hooks/use-theme";
 
 export const SettingsPage = () => {
+    const navigate = useNavigate();
     const { user } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const [settings, setSettings] = useState({
@@ -28,7 +30,7 @@ export const SettingsPage = () => {
         try {
             setLoading(true);
             await supabase.auth.signOut();
-            // Auth state change will automatically show AuthPage
+            navigate("/");
         } catch (err) {
             console.error("Logout exception:", err);
         } finally {
