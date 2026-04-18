@@ -1,0 +1,295 @@
+/**
+ * UX/UI Enhancement CSS
+ * Additional CSS utilities for premium feel
+ */
+
+/* ============================================================================
+   SMOOTH TRANSITIONS
+   ============================================================================ */
+
+* {
+    @apply transition-all duration-200 ease-out;
+}
+
+button,
+a,
+[role="button"] {
+    @apply transition-all duration-200 ease-in-out;
+}
+
+input,
+textarea,
+select {
+    @apply transition-all duration-200;
+}
+
+/* ============================================================================
+   HOVER EFFECTS
+   ============================================================================ */
+
+button:not(:disabled) {
+    @apply hover:shadow-md active:shadow-sm;
+}
+
+a:not(.no-underline) {
+    @apply hover:underline;
+}
+
+/* ============================================================================
+   FOCUS STYLES (Accessibility)
+   ============================================================================ */
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+}
+
+/* ============================================================================
+   FORM ENHANCEMENTS
+   ============================================================================ */
+
+input,
+textarea,
+select {
+    @apply transition-all duration-200 ease-in-out;
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+    @apply opacity-50 cursor-not-allowed;
+}
+
+input::placeholder,
+textarea::placeholder {
+    @apply text-muted-foreground/50;
+}
+
+/* ============================================================================
+   LOADING STATES
+   ============================================================================ */
+
+@keyframes pulse-subtle {
+
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+@keyframes spin-slow {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-pulse-subtle {
+    animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-shimmer {
+    animation: shimmer 2s infinite linear;
+}
+
+.animate-spin-slow {
+    animation: spin-slow 2s linear infinite;
+}
+
+/* ============================================================================
+   SCROLL BEHAVIOR
+   ============================================================================ */
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* ============================================================================
+   SELECTION COLORS
+   ============================================================================ */
+
+::selection {
+    @apply bg-primary text-primary-foreground;
+}
+
+/* ============================================================================
+   SCROLLBAR STYLING
+   ============================================================================ */
+
+::-webkit-scrollbar {
+    @apply w-2 h-2;
+}
+
+::-webkit-scrollbar-track {
+    @apply bg-muted;
+}
+
+::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground rounded-full hover:bg-foreground;
+}
+
+/* ============================================================================
+   RESPONSIVE UTILITIES
+   ============================================================================ */
+
+@media (max-width: 640px) {
+
+    /* Reduce animation duration on mobile for better performance */
+    * {
+        --tw-duration: 150ms;
+    }
+}
+
+/* ============================================================================
+   BACKDROP BLUR (Modern Browsers)
+   ============================================================================ */
+
+.backdrop-blur-sm {
+    @apply supports-[backdrop-filter]:backdrop-blur-sm;
+}
+
+.backdrop-blur {
+    @apply supports-[backdrop-filter]:backdrop-blur;
+}
+
+/* ============================================================================
+   GRADIENT ANIMATIONS
+   ============================================================================ */
+
+@keyframes gradient-shift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient-shift 3s ease infinite;
+}
+
+/* ============================================================================
+   GLOW EFFECTS
+   ============================================================================ */
+
+.glow-primary {
+    @apply shadow-lg shadow-primary/50;
+}
+
+.glow-emerald {
+    @apply shadow-lg shadow-emerald-500/50;
+}
+
+.glow-red {
+    @apply shadow-lg shadow-red-500/50;
+}
+
+.glow-yellow {
+    @apply shadow-lg shadow-yellow-500/50;
+}
+
+/* ============================================================================
+   TEXT UTILITIES
+   ============================================================================ */
+
+.text-gradient {
+    @apply bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent;
+}
+
+.text-balance {
+    text-wrap: balance;
+}
+
+.text-pretty {
+    text-wrap: pretty;
+}
+
+/* ============================================================================
+   ACCESSIBILITY
+   ============================================================================ */
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: more) {
+    button {
+        @apply border-2;
+    }
+
+    input,
+    textarea,
+    select {
+        @apply border-2;
+    }
+}
+
+/* ============================================================================
+   DARK MODE OPTIMIZATIONS
+   ============================================================================ */
+
+@media (prefers-color-scheme: dark) {
+    ::-webkit-scrollbar-thumb {
+        @apply bg-slate-600 hover:bg-slate-500;
+    }
+
+    ::selection {
+        @apply bg-blue-600 text-white;
+    }
+}
+
+/* ============================================================================
+   PRINT STYLES
+   ============================================================================ */
+
+@media print {
+    * {
+        @apply bg-white text-black;
+    }
+
+    button,
+    a {
+        @apply no-underline;
+    }
+
+    .no-print {
+        @apply hidden;
+    }
+}

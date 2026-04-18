@@ -99,6 +99,9 @@
   }
 }
 
+/* Import UX/UI enhancement styles */
+@import "./styles/ux-enhancements.css";
+
 /* Animated gradient border wrapper */
 .gradient-border-card {
   position: relative;

@@ -669,20 +669,232 @@ app.post('/api/ai-advisor', async (req, res) => {
     }
 });
 
+// ============================================================================
+// RETENTION FEATURES - User Activity Tracking
+// ============================================================================
+
+// GET /api/retention/last-analyzed-idea - Get last analyzed idea for user
+app.get('/api/retention/last-analyzed-idea', async (req, res) => {
+    try {
+        const { userId } = req.query;
+
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required parameter: userId',
+            });
+        }
+
+        const supabase = getSupabaseClient();
+
+        // Fetch last analyzed idea
+        const { data, error } = await supabase
+            .from('startup_ideas')
+            .select(`
+                id,
+                idea_text,
+                industry,
+                created_at,
+                _analysis:idea_analysis(
+                    market_score,
+                    competition_score,
+                    feasibility_score,
+                    analysis_text
+                )
+            `)
+            .eq('user_id', userId)
+            .not('_analysis', 'is', null)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (error && error.code !== 'PGRST116') throw error;
+
+        res.json({
+            success: true,
+            data: data || null,
+        });
+    } catch (error) {
+        console.error('Error fetching last analyzed idea:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+// GET /api/retention/engagement-metrics - Get user engagement metrics
+app.get('/api/retention/engagement-metrics', async (req, res) => {
+    try {
+        const { userId } = req.query;
+
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required parameter: userId',
+            });
+        }
+
+        const supabase = getSupabaseClient();
+
+        // Get total ideas count
+        const { count: totalIdeas } = await supabase
+            .from('startup_ideas')
+            .select('id', { count: 'exact' })
+            .eq('user_id', userId);
+
+        // Get ideas with analysis
+        const { data: ideasWithAnalysis } = await supabase
+            .from('startup_ideas')
+            .select('id')
+            .eq('user_id', userId);
+
+        let analyzedCount = 0;
+        if (ideasWithAnalysis && ideasWithAnalysis.length > 0) {
+            const { count } = await supabase
+                .from('idea_analysis')
+                .select('id', { count: 'exact' })
+                .in('idea_id', ideasWithAnalysis.map(i => i.id));
+            analyzedCount = count || 0;
+        }
+
+        res.json({
+            success: true,
+            data: {
+                totalIdeas: totalIdeas || 0,
+                analyzedIdeas: analyzedCount,
+                engagementScore: calculateEngagementScore(totalIdeas || 0, analyzedCount),
+            },
+        });
+    } catch (error) {
+        console.error('Error fetching engagement metrics:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+});
+
+// GET /api/retention/suggestions - Get retention suggestions
+app.get('/api/retention/suggestions', async (req, res) => {
+    try {
+        const { userId } = req.query;
+
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required parameter: userId',
+            });
+        }
+
+        const supabase = getSupabaseClient();
+        const suggestions = [];
+
+        // Get last analyzed idea
+        const { data: lastIdea } = await supabase
+            .from('startup_ideas')
+            .select(`
+                id,
+                idea_text,
+                industry,
+                created_at,
+                _analysis:idea_analysis(
+                    market_score,
+                    competition_score,
+                    feasibility_score
+                )
+            `)
+            .eq('user_id', userId)
+            .not('_analysis', 'is', null)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        // Suggestion 1: Improve last idea if score is low
+        if (lastIdea) {
+            const analysis = lastIdea._analysis?.[0];
+            if (analysis) {
+                const score = (analysis.market_score + (100 - analysis.competition_score) + analysis.feasibility_score) / 3;
+
+                if (score < 70) {
+                    suggestions.push({
+                        type: 'improve_low_scoring_idea',
+                        title: 'Improve Your Last Idea',
+                        description: `Your idea "${lastIdea.idea_text.substring(0, 40)}..." scored ${Math.round(score)}/100. Here's how to improve it.`,
+                        actionText: 'View Feedback',
+                        actionUrl: `/reports`,
+                        priority: 'high',
+                        icon: 'TrendingUp',
+                    });
+                }
+            }
+
+            // Suggestion 2: Continue where you left off
+            const lastAnalyzedDate = new Date(lastIdea.created_at);
+            const daysSinceAnalysis = Math.floor((new Date() - lastAnalyzedDate) / (1000 * 60 * 60 * 24));
+
+            if (daysSinceAnalysis > 0) {
+                suggestions.push({
+                    type: 'continue_analysis',
+                    title: 'Continue Where You Left Off',
+                    description: `Last analyzed "${lastIdea.idea_text.substring(0, 40)}..." ${daysSinceAnalysis} day${daysSinceAnalysis > 1 ? 's' : ''} ago`,
+                    actionText: 'Continue',
+                    actionUrl: '/reports',
+                    priority: 'medium',
+                    icon: 'Play',
+                });
+            }
+        }
+
+        // Suggestion 3: Analyze more ideas
+        const { count: totalIdeas } = await supabase
+            .from('startup_ideas')
+            .select('id', { count: 'exact' })
+            .eq('user_id', userId);
+
+        if (totalIdeas && totalIdeas < 5) {
+            suggestions.push({
+                type: 'analyze_more_ideas',
+                title: 'Validate More Ideas',
+                description: 'You\'ve only analyzed ' + (totalIdeas || 0) + ' idea(s). Try a few more to find the best opportunity.',
+                actionText: 'Create New Idea',
+                actionUrl: '/validate-idea',
+                priority: 'medium',
+                icon: 'Lightbulb',
+            });
+        }
+
+        res.json({
+            success: true,
+            suggestions: suggestions.sort((a, b) => {
+                const priorityMap = { high: 0, medium: 1, low: 2 };
+                return priorityMap[a.priority] - priorityMap[b.priority];
+            }),
+        });
+    } catch (error) {
+        console.error('Error fetching retention suggestions:', error);
+        res.status(500).json({ success: false, error: 'Internal server error', suggestions: [] });
+    }
+});
+
+// Helper function to calculate engagement score
+function calculateEngagementScore(totalIdeas, analyzedIdeas) {
+    if (totalIdeas === 0) return 0;
+    const score = Math.round((analyzedIdeas / totalIdeas) * 100);
+    return Math.min(score, 100);
+}
+
 // Start server
 app.listen(PORT, () => {
     console.log(`Backend server running on http://localhost:${PORT}`);
     console.log(`Test endpoint: http://localhost:${PORT}/api/test`);
     console.log(`\nAvailable endpoints:`);
-    console.log(`  GET  /api/test                      - Health check`);
-    console.log(`  GET  /api/getIdeas                  - Fetch all startup ideas`);
-    console.log(`  GET  /api/get-ideas?userId=...      - Fetch ideas for user`);
-    console.log(`  GET  /api/getAnalysis?ideaId=...    - Fetch idea analysis`);
-    console.log(`  GET  /api/get-analysis?ideaId=...   - Fetch analysis for idea`);
-    console.log(`  POST /api/analyzeIdea               - Create and analyze an idea`);
-    console.log(`  POST /api/reanalyzeIdea             - Re-analyze an existing idea`);
-    console.log(`  GET  /api/insights?userId=...       - Get user insights`);
-    console.log(`  GET  /api/dashboard-stats?userId=...  - Get dashboard stats`);
-    console.log(`  GET  /api/smart-suggestions?userId=... - Get smart suggestions for dashboard`);
-    console.log(`  POST /api/ai-advisor                - Chat with AI advisor`);
+    console.log(`  GET  /api/test                           - Health check`);
+    console.log(`  GET  /api/getIdeas                       - Fetch all startup ideas`);
+    console.log(`  GET  /api/get-ideas?userId=...           - Fetch ideas for user`);
+    console.log(`  GET  /api/getAnalysis?ideaId=...         - Fetch idea analysis`);
+    console.log(`  GET  /api/get-analysis?ideaId=...        - Fetch analysis for idea`);
+    console.log(`  POST /api/analyzeIdea                    - Create and analyze an idea`);
+    console.log(`  POST /api/reanalyzeIdea                  - Re-analyze an existing idea`);
+    console.log(`  GET  /api/insights?userId=...            - Get user insights`);
+    console.log(`  GET  /api/dashboard-stats?userId=...     - Get dashboard stats`);
+    console.log(`  GET  /api/smart-suggestions?userId=...   - Get smart suggestions`);
+    console.log(`  POST /api/ai-advisor                     - Chat with AI advisor`);
+    console.log(`  GET  /api/retention/last-analyzed-idea   - Get last analyzed idea`);
+    console.log(`  GET  /api/retention/engagement-metrics   - Get engagement metrics`);
+    console.log(`  GET  /api/retention/suggestions          - Get retention suggestions`);
 });

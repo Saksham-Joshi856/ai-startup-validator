@@ -19,6 +19,9 @@ import { ParticleBackground } from "@/components/dashboard/ParticleBackground";
 import { FloatingActionButton } from "@/components/dashboard/FloatingActionButton";
 import { LoadingTimeout } from "@/components/common/LoadingTimeout";
 import { StatSkeleton, CardSkeleton, TableSkeleton } from "@/components/common/SkeletonLoaders";
+import { LastAnalyzedIdea } from "@/components/retention/LastAnalyzedIdea";
+import { RetentionReminders } from "@/components/retention/RetentionReminders";
+import { EngagementStatus } from "@/components/retention/EngagementStatus";
 import { statsData as mockStatsData } from "@/lib/mock-data";
 
 const stagger = {
@@ -85,6 +88,20 @@ export const DashboardPage = () => {
                         ))}
                     </motion.div>
                 )}
+
+                {/* RETENTION FEATURES */}
+                {/* Engagement Reminders */}
+                <RetentionReminders userId={user?.id || null} maxSuggestions={3} />
+
+                {/* Last Analyzed Idea - Quick Continue Action */}
+                <div className="mb-6">
+                    <LastAnalyzedIdea userId={user?.id || null} />
+                </div>
+
+                {/* Engagement Status */}
+                <div className="mb-6">
+                    <EngagementStatus userId={user?.id || null} />
+                </div>
 
                 {/* Smart Suggestion Cards */}
                 <SmartSuggestionCards userId={user?.id || null} />
