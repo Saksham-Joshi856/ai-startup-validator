@@ -173,45 +173,45 @@ export function useDashboardStats(userId: string | null) {
     const [error, setError] = useState<string | null>(null);
     const [isTimeout, setIsTimeout] = useState(false);
 
-    useEffect(() => {
+    const fetchStats = async () => {
         if (!userId) return;
 
-        const fetchStats = async () => {
-            setLoading(true);
-            setError(null);
-            setIsTimeout(false);
+        setLoading(true);
+        setError(null);
+        setIsTimeout(false);
 
-            const timeoutId = setTimeout(() => {
-                setIsTimeout(true);
-                setLoading(false);
-            }, API_TIMEOUT_MS);
+        const timeoutId = setTimeout(() => {
+            setIsTimeout(true);
+            setLoading(false);
+        }, API_TIMEOUT_MS);
 
-            try {
-                const response = await dashboardApi.getStats(userId);
-                clearTimeout(timeoutId);
-                if (response.success) {
-                    setStats(response.data);
-                    setIsTimeout(false);
-                } else {
-                    setError(response.error || 'Failed to fetch stats');
-                }
-            } catch (err) {
-                clearTimeout(timeoutId);
-                if (isTimeoutError(err)) {
-                    setIsTimeout(true);
-                    setError('Stats are loading. Please wait...');
-                } else {
-                    setError(err instanceof Error ? err.message : 'Unknown error');
-                }
-            } finally {
-                setLoading(false);
+        try {
+            const response = await dashboardApi.getStats(userId);
+            clearTimeout(timeoutId);
+            if (response.success) {
+                setStats(response.data);
+                setIsTimeout(false);
+            } else {
+                setError(response.error || 'Failed to fetch stats');
             }
-        };
+        } catch (err) {
+            clearTimeout(timeoutId);
+            if (isTimeoutError(err)) {
+                setIsTimeout(true);
+                setError('Stats are loading. Please wait...');
+            } else {
+                setError(err instanceof Error ? err.message : 'Unknown error');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchStats();
     }, [userId]);
 
-    return { stats, loading, error, isTimeout };
+    return { stats, loading, error, isTimeout, refetch: fetchStats };
 }
 
 // ============================================================================

@@ -342,12 +342,76 @@ app.get('/api/dashboard-stats', async (req, res) => {
             });
         }
 
-        // Placeholder response
+        // Fetch user's ideas and analyses from Supabase
+        const supabase = getSupabaseClient();
+
+        // Get all ideas for the user
+        const { data: ideasData, error: ideasError } = await supabase
+            .from('startup_ideas')
+            .select('id, industry, created_at')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+
+        if (ideasError) {
+            console.error('Error fetching ideas:', ideasError);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to fetch ideas',
+            });
+        }
+
+        const totalIdeas = ideasData?.length || 0;
+        let totalScore = 0;
+        let analysisCount = 0;
+        let analysesData = [];
+
+        if (totalIdeas > 0) {
+            const ideaIds = ideasData.map((idea) => idea.id);
+
+            const { data: fetchedAnalyses, error: analysisError } = await supabase
+                .from('idea_analysis')
+                .select('market_score, competition_score, feasibility_score')
+                .in('idea_id', ideaIds);
+
+            if (analysisError) {
+                console.warn('Error fetching analyses:', analysisError);
+            }
+
+            if (fetchedAnalyses && fetchedAnalyses.length > 0) {
+                analysesData = fetchedAnalyses;
+                analysisCount = fetchedAnalyses.length;
+                totalScore = fetchedAnalyses.reduce((sum, analysis) => {
+                    const avgScore =
+                        (analysis.market_score +
+                            (100 - analysis.competition_score) +
+                            analysis.feasibility_score) /
+                        3;
+                    return sum + avgScore;
+                }, 0);
+            }
+        }
+
+        const avgScore = analysisCount > 0 ? Math.round(totalScore / analysisCount) : 0;
+
+        // Success rate: ideas with analysis score >= 70
+        const successfulIdeas = analysesData.filter(
+            (a) =>
+                (a.market_score +
+                    (100 - a.competition_score) +
+                    a.feasibility_score) /
+                3 >=
+                70
+        ).length;
+
+        const successRate = analysisCount > 0 ? Math.round((successfulIdeas / analysisCount) * 100) : 0;
+
         res.json({
             success: true,
-            total_ideas: 0,
-            avg_score: 0,
-            success_rate: 0,
+            data: {
+                total_ideas: totalIdeas,
+                avg_score: avgScore,
+                success_rate: successRate,
+            },
         });
     } catch (error) {
         console.error('Error in dashboard-stats endpoint:', error);

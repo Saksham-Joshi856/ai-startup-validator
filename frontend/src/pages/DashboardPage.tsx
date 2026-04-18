@@ -2,11 +2,15 @@ import { motion } from "framer-motion";
 import { LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useDashboardStats } from "@/hooks/useApiCalls";
+import { usePersonalizedInsights } from "@/hooks/usePersonalizedInsights";
 import { StatCard } from "@/components/cards/StatCard";
 import { RecentValidations } from "@/components/dashboard/RecentValidations";
 import { InsightsPanel } from "@/components/dashboard/InsightsPanel";
 import { IdeaSubmissionForm } from "@/components/dashboard/IdeaSubmissionForm";
 import { SmartSuggestionCards } from "@/components/dashboard/SmartSuggestionCards";
+import { PersonalizedInsightsCard } from "@/components/dashboard/PersonalizedInsightsCard";
+import { ScoreTrendChart } from "@/components/dashboard/ScoreTrendChart";
+import { QuickActionsPanel } from "@/components/dashboard/QuickActionsPanel";
 import { IdeasList } from "@/components/dashboard/IdeasList";
 import { IndustryTrendChart } from "@/components/charts/IndustryTrendChart";
 import { ScoreDistributionChart } from "@/components/charts/ScoreDistributionChart";
@@ -25,6 +29,7 @@ const stagger = {
 export const DashboardPage = () => {
     const { user } = useAuth();
     const { stats, loading, isTimeout } = useDashboardStats(user?.id || null);
+    const { insights, loading: insightsLoading } = usePersonalizedInsights(user?.id || null);
 
     // Transform API stats to StatCard format
     const displayStats = stats
@@ -83,6 +88,15 @@ export const DashboardPage = () => {
 
                 {/* Smart Suggestion Cards */}
                 <SmartSuggestionCards userId={user?.id || null} />
+
+                {/* Personalized Insights Card */}
+                <PersonalizedInsightsCard insights={insights} loading={insightsLoading} />
+
+                {/* Score Trend Chart */}
+                <ScoreTrendChart data={insights.scoresTrend} />
+
+                {/* Quick Actions Panel */}
+                <QuickActionsPanel />
 
                 {/* Idea Submission Form */}
                 <div className="mb-8">
