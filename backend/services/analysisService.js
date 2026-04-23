@@ -99,6 +99,14 @@ export async function saveIdeaAnalysis(
         console.log(`   Linked to Idea ID: ${data.idea_id}`);
         console.log(`   Verification: idea_id matches input? ${data.idea_id === ideaId ? '✓ YES' : '✗ NO - MISMATCH!'}`);
         return {
+            data: data,
+            error: null,
+        };
+    } catch (exception) {
+        const errorMessage =
+            exception instanceof Error ? exception.message : 'Unknown error occurred';
+        console.error('Exception while saving idea analysis:', errorMessage);
+        return {
             data: null,
             error: errorMessage,
         };
