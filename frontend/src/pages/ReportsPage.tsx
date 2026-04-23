@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { FileText } from "lucide-react";
+import { FileText, Lightbulb } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetIdeas, useGetAnalysis } from "@/hooks/useApiCalls";
@@ -38,10 +38,12 @@ export const ReportsPage = () => {
             // Search filter
             if (filters.searchText) {
                 const searchLower = filters.searchText.toLowerCase();
+                const ideaText = idea.idea_text || '';
+                const industry = idea.industry || '';
+
                 if (
-                    !idea.title?.toLowerCase().includes(searchLower) &&
-                    !idea.idea_text?.toLowerCase().includes(searchLower) &&
-                    !idea.industry?.toLowerCase().includes(searchLower)
+                    !ideaText.toLowerCase().includes(searchLower) &&
+                    !industry.toLowerCase().includes(searchLower)
                 ) {
                     return false;
                 }
@@ -63,11 +65,11 @@ export const ReportsPage = () => {
             .filter((idea) => compareIds.includes(idea.id))
             .map((idea) => ({
                 id: idea.id,
-                title: idea.title || idea.idea_text || "Untitled",
+                title: idea.idea_text || "Untitled",
                 industry: idea.industry,
-                marketScore: idea._analysis?.market_score || 0,
-                competitionScore: idea._analysis?.competition_score || 0,
-                feasibilityScore: idea._analysis?.feasibility_score || 0,
+                marketScore: idea.analysis?.market_score || 0,
+                competitionScore: idea.analysis?.competition_score || 0,
+                feasibilityScore: idea.analysis?.feasibility_score || 0,
             }));
     }, [ideas, compareIds]);
 
@@ -78,22 +80,27 @@ export const ReportsPage = () => {
         const idea = ideas.find((i) => i.id === ideaId);
         if (!idea) return;
 
-        const ideaTitle = idea.title || idea.idea_text || "idea";
+        const ideaTitle = idea.idea_text || "your idea";
+        console.log(`🔄 [ReportsPage] Re-analyzing idea:`, ideaId);
+        console.log(`   Idea: "${ideaTitle.substring(0, 60)}..."`);
+
         toast({
             title: "Re-analyzing...",
-            description: `Re-analyzing "${ideaTitle}"`,
+            description: `Re-analyzing "${ideaTitle.substring(0, 60)}..."`,
         });
 
         const success = await reanalyze(ideaId, user.id);
 
         if (success) {
+            console.log(`✅ [ReportsPage] Re-analysis completed for idea:`, ideaId);
             toast({
                 title: "Analysis Complete",
-                description: `"${ideaTitle}" has been re-analyzed successfully`,
+                description: `Analysis updated successfully`,
             });
             // Refresh the ideas list
             refetch();
         } else {
+            console.error(`❌ [ReportsPage] Re-analysis failed for idea:`, ideaId);
             toast({
                 title: "Re-analysis Failed",
                 description: "Something went wrong. Please try again.",
@@ -120,9 +127,11 @@ export const ReportsPage = () => {
     // Handle delete
     const handleDelete = (ideaId: string) => {
         const idea = ideas.find((i) => i.id === ideaId);
+        const ideaTitle = idea?.idea_text || "this idea";
+        console.log(`🗑️ [ReportsPage] Delete requested for idea:`, ideaId);
         toast({
             title: "Delete idea",
-            description: `Delete "${idea?.title || idea?.idea_text || "this idea"}"?`,
+            description: `Delete "${ideaTitle.substring(0, 50)}..."?`,
         });
         // TODO: Add delete API call here
     };
@@ -188,13 +197,14 @@ export const ReportsPage = () => {
                             >
                                 <IdeaReportCard
                                     id={idea.id}
-                                    title={idea.title || idea.idea_text || "Untitled Idea"}
+                                    title={idea.idea_text || "Untitled Idea"}
                                     industry={idea.industry}
                                     description={idea.idea_text}
-                                    marketScore={idea._analysis?.market_score || 0}
-                                    competitionScore={idea._analysis?.competition_score || 0}
-                                    feasibilityScore={idea._analysis?.feasibility_score || 0}
+                                    marketScore={idea.analysis?.market_score || 0}
+                                    competitionScore={idea.analysis?.competition_score || 0}
+                                    feasibilityScore={idea.analysis?.feasibility_score || 0}
                                     createdAt={idea.created_at || new Date().toISOString()}
+                                    analysisText={idea.analysis?.analysis_text}
                                     isSelected={compareIds.includes(idea.id)}
                                     onSelect={setSelectedIdea}
                                     onReanalyze={handleReanalyze}
@@ -215,13 +225,39 @@ export const ReportsPage = () => {
                     </div>
                 ) : (
                     /* Empty State */
-                    <div className="glass-effect rounded-xl p-12 border border-primary/10 text-center">
-                        <FileText className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                        <h3 className="font-semibold text-foreground mb-2">No Reports Yet</h3>
-                        <p className="text-sm text-muted-foreground">
-                            Create and validate ideas to generate reports
-                        </p>
-                    </div>
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="flex flex-col items-center justify-center py-16"
+                    >
+                        <div className="text-center max-w-md">
+                            <motion.div
+                                animate={{ y: [0, -8, 0] }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                                className="mb-6"
+                            >
+                                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/30">
+                                    <FileText className="w-10 h-10 text-primary/60" />
+                                </div>
+                            </motion.div>
+
+                            <h2 className="text-2xl font-bold text-foreground mb-2">No Ideas Yet</h2>
+                            <p className="text-sm text-muted-foreground mb-6">
+                                Validate your first startup idea to generate AI-powered reports and insights.
+                            </p>
+
+                            <motion.a
+                                href="/validate"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-primary to-primary/80 text-foreground font-semibold hover:from-primary/90 hover:to-primary/70 transition-all"
+                            >
+                                <Lightbulb className="w-5 h-5" />
+                                Create Your First Idea
+                            </motion.a>
+                        </div>
+                    </motion.div>
                 )}
 
                 {/* Compare Modal */}

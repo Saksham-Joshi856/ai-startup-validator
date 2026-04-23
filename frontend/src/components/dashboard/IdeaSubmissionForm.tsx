@@ -76,13 +76,20 @@ export function IdeaSubmissionForm() {
         e.preventDefault();
 
         if (!ideaText.trim() || !selectedIndustry) {
+            console.warn('Form validation failed: missing idea text or industry');
             return;
         }
 
         if (!user?.id) {
-            console.error('User not authenticated');
+            console.error('❌ User not authenticated - userId is missing');
             return;
         }
+
+        console.log(`✅ [IdeaSubmissionForm] Submitting idea for analysis`);
+        console.log(`   📝 User ID (from Supabase): ${user.id}`);
+        console.log(`   💡 Idea Text: "${ideaText.substring(0, 60)}..."`);
+        console.log(`   🏭 Industry: ${selectedIndustry}`);
+        console.log(`   📤 API Endpoint: /api/analyzeIdea`);
 
         await analyzeIdea(user.id, ideaText, selectedIndustry);
     };

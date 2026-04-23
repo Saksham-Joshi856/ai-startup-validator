@@ -11,11 +11,20 @@ export async function createStartupIdea(userId, ideaText, industry) {
     try {
         // Validate input parameters
         if (!userId || !ideaText || !industry) {
+            console.error('❌ [ideaService] Validation failed:');
+            console.error(`   userId: ${userId ? '✓' : '✗ MISSING'}`);
+            console.error(`   ideaText: ${ideaText ? '✓' : '✗ MISSING'}`);
+            console.error(`   industry: ${industry ? '✓' : '✗ MISSING'}`);
             return {
                 data: null,
                 error: 'Missing required fields: userId, ideaText, or industry',
             };
         }
+
+        console.log(`\n📝 [ideaService.createStartupIdea] Inserting new idea...`);
+        console.log(`   User ID (will be stored as user_id): ${userId}`);
+        console.log(`   Idea: "${ideaText.substring(0, 60)}..."`);
+        console.log(`   Industry: ${industry}`);
 
         // Insert the new idea into startup_ideas table
         const supabase = getSupabaseClient();
@@ -34,12 +43,19 @@ export async function createStartupIdea(userId, ideaText, industry) {
 
         // Handle insertion errors
         if (error) {
-            console.error('Error creating startup idea:', error.message);
+            console.error(`❌ [ideaService] Error creating startup idea:`, error.message);
             return {
                 data: null,
                 error: error.message,
             };
         }
+
+        // Verify that data was inserted with correct user_id
+        console.log(`✅ [ideaService] Idea successfully inserted into database`);
+        console.log(`   Inserted ID: ${data.id}`);
+        console.log(`   Stored user_id: ${data.user_id}`);
+        console.log(`   Created at: ${data.created_at}`);
+        console.log(`   Verification: user_id matches input? ${data.user_id === userId ? '✓ YES' : '✗ NO - MISMATCH!'}`);
 
         // Return success with the created idea data
         return {
@@ -49,7 +65,7 @@ export async function createStartupIdea(userId, ideaText, industry) {
     } catch (exception) {
         const errorMessage =
             exception instanceof Error ? exception.message : 'Unknown error occurred';
-        console.error('Exception while creating startup idea:', errorMessage);
+        console.error(`❌ [ideaService] Exception while creating startup idea:`, errorMessage);
         return {
             data: null,
             error: errorMessage,

@@ -144,30 +144,56 @@ app.post('/api/analyzeIdea', async (req, res) => {
 
         const { userId, ideaText, industry } = req.body;
 
-        if (!userId || !ideaText || !industry) {
+        // Validate all required fields
+        if (!userId) {
+            console.error('❌ Missing userId in request body');
             return res.status(400).json({
                 success: false,
-                error: 'Missing required fields: userId, ideaText, or industry',
+                error: 'Missing required field: userId',
             });
         }
+
+        if (!ideaText) {
+            console.error('❌ Missing ideaText in request body');
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required field: ideaText',
+            });
+        }
+
+        if (!industry) {
+            console.error('❌ Missing industry in request body');
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required field: industry',
+            });
+        }
+
+        console.log(`\n📊 [/api/analyzeIdea] Processing request for userId: ${userId}`);
+        console.log(`   Idea: ${ideaText.substring(0, 50)}...`);
+        console.log(`   Industry: ${industry}`);
 
         const result = await createAndAnalyzeIdea(userId, ideaText, industry);
 
         if (result.error) {
-            console.error('Error in analysis pipeline:', result.error);
+            console.error('❌ [/api/analyzeIdea] Error in analysis pipeline:', result.error);
             return res.status(500).json({
                 success: false,
                 error: result.error,
             });
         }
 
+        console.log(`✅ [/api/analyzeIdea] Successfully processed idea for userId: ${userId}`);
+
         res.json({
             success: true,
-            idea: result.idea,
-            analysis: result.analysis,
+            data: {
+                idea: result.idea,
+                analysis: result.analysis,
+            },
         });
     } catch (error) {
-        console.error('Error in analyzeIdea endpoint:', error);
+        console.error('❌ [/api/analyzeIdea] Unexpected error:', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });
@@ -245,26 +271,78 @@ app.get('/api/get-ideas', async (req, res) => {
     try {
         const { userId } = req.query;
 
+        console.log(`\n📋 [/api/get-ideas] Fetching ideas for user`);
+
         if (!userId) {
+            console.error('❌ [/api/get-ideas] Missing userId query parameter');
             return res.status(400).json({
                 success: false,
                 error: 'Missing required query parameter: userId',
             });
         }
 
-        const result = await getAllStartupIdeas();
+        console.log(`   User ID: ${userId}`);
 
-        if (result.error) {
-            console.error('Error fetching ideas:', result.error);
-            return res.status(500).json({ success: false, error: result.error });
+        // Query startup_ideas filtered by user_id
+        const supabase = getSupabaseClient();
+        const { data: ideas, error: ideasError } = await supabase
+            .from('startup_ideas')
+            .select('id, user_id, idea_text, industry, created_at')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+
+        if (ideasError) {
+            console.error('❌ [/api/get-ideas] Error fetching ideas:', ideasError.message);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to fetch ideas: ' + ideasError.message,
+            });
         }
+
+        console.log(`   📊 Found ${ideas?.length || 0} ideas for user`);
+
+        // For each idea, fetch its analysis
+        const ideasWithAnalysis = [];
+
+        if (ideas && ideas.length > 0) {
+            for (const idea of ideas) {
+                const { data: analysis, error: analysisError } = await supabase
+                    .from('idea_analysis')
+                    .select('*')
+                    .eq('idea_id', idea.id)
+                    .single();
+
+                if (!analysisError && analysis) {
+                    ideasWithAnalysis.push({
+                        ...idea,
+                        analysis: {
+                            id: analysis.id,
+                            market_score: analysis.market_score,
+                            competition_score: analysis.competition_score,
+                            feasibility_score: analysis.feasibility_score,
+                            analysis_text: analysis.analysis_text,
+                        },
+                    });
+                    console.log(`   ✅ Analysis loaded for idea ${idea.id}`);
+                } else {
+                    // Idea might not have analysis yet
+                    ideasWithAnalysis.push({
+                        ...idea,
+                        analysis: null,
+                    });
+                    console.log(`   ⚠️ No analysis found for idea ${idea.id}`);
+                }
+            }
+        }
+
+        console.log(`✅ [/api/get-ideas] Returning ${ideasWithAnalysis.length} ideas with analysis`);
 
         res.json({
             success: true,
-            ideas: result.data || [],
+            data: ideasWithAnalysis || [],
         });
     } catch (error) {
-        console.error('Error in get-ideas endpoint:', error);
+        console.error('❌ [/api/get-ideas] Unexpected error:', error);
         res.status(500).json({ success: false, error: 'Internal server error' });
     }
 });

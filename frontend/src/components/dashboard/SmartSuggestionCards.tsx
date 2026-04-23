@@ -95,7 +95,7 @@ export const SmartSuggestionCards = ({
             onSuggestionClick(suggestion);
         } else {
             // Navigate to validate idea page if suggestion clicked
-            navigate('/validate-idea');
+            navigate('/validate');
         }
     };
 

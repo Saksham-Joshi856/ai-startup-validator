@@ -25,6 +25,12 @@ export async function saveIdeaAnalysis(
             feasibilityScore == null ||
             !analysisText
         ) {
+            console.error('❌ [analysisService] Validation failed:');
+            console.error(`   ideaId: ${ideaId ? '✓' : '✗ MISSING'}`);
+            console.error(`   marketScore: ${marketScore != null ? '✓' : '✗ MISSING'}`);
+            console.error(`   competitionScore: ${competitionScore != null ? '✓' : '✗ MISSING'}`);
+            console.error(`   feasibilityScore: ${feasibilityScore != null ? '✓' : '✗ MISSING'}`);
+            console.error(`   analysisText: ${analysisText ? '✓' : '✗ MISSING'}`);
             return {
                 data: null,
                 error: 'Missing required fields: ideaId, marketScore, competitionScore, feasibilityScore, or analysisText',
@@ -33,23 +39,33 @@ export async function saveIdeaAnalysis(
 
         // Validate score ranges (0-100)
         if (marketScore < 0 || marketScore > 100) {
+            console.error(`❌ [analysisService] Invalid marketScore: ${marketScore} (must be 0-100)`);
             return {
                 data: null,
                 error: 'marketScore must be between 0 and 100',
             };
         }
         if (competitionScore < 0 || competitionScore > 100) {
+            console.error(`❌ [analysisService] Invalid competitionScore: ${competitionScore} (must be 0-100)`);
             return {
                 data: null,
                 error: 'competitionScore must be between 0 and 100',
             };
         }
         if (feasibilityScore < 0 || feasibilityScore > 100) {
+            console.error(`❌ [analysisService] Invalid feasibilityScore: ${feasibilityScore} (must be 0-100)`);
             return {
                 data: null,
                 error: 'feasibilityScore must be between 0 and 100',
             };
         }
+
+        console.log(`\n💾 [analysisService.saveIdeaAnalysis] Saving analysis to database...`);
+        console.log(`   Idea ID (FK reference): ${ideaId}`);
+        console.log(`   Market Score: ${marketScore}/100`);
+        console.log(`   Competition Score: ${competitionScore}/100`);
+        console.log(`   Feasibility Score: ${feasibilityScore}/100`);
+        console.log(`   Analysis Text: ${analysisText.substring(0, 50)}...`);
 
         // Insert the analysis into idea_analysis table
         const supabase = getSupabaseClient();
@@ -69,22 +85,19 @@ export async function saveIdeaAnalysis(
 
         // Handle insertion errors
         if (error) {
-            console.error('Error saving idea analysis:', error.message);
+            console.error(`❌ [analysisService] Error saving idea analysis:`, error.message);
+            console.error(`   Failed to link analysis to idea_id: ${ideaId}`);
             return {
                 data: null,
                 error: error.message,
             };
         }
 
-        // Return success with the created analysis data
-        return {
-            data: data,
-            error: null,
-        };
-    } catch (exception) {
-        const errorMessage =
-            exception instanceof Error ? exception.message : 'Unknown error occurred';
-        console.error('Exception while saving idea analysis:', errorMessage);
+        // Verify data was inserted correctly
+        console.log(`✅ [analysisService] Analysis successfully saved to database`);
+        console.log(`   Analysis Record ID: ${data.id}`);
+        console.log(`   Linked to Idea ID: ${data.idea_id}`);
+        console.log(`   Verification: idea_id matches input? ${data.idea_id === ideaId ? '✓ YES' : '✗ NO - MISMATCH!'}`);
         return {
             data: null,
             error: errorMessage,

@@ -38,7 +38,7 @@ export const QuickActionsPanel = ({
         if (onValidateClick) {
             onValidateClick();
         } else {
-            navigate('/validate-idea');
+            navigate('/validate');
         }
     };
 

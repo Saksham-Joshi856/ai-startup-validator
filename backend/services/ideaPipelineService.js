@@ -18,6 +18,10 @@ export async function createAndAnalyzeIdea(userId, ideaText, industry) {
     try {
         // Validate input parameters
         if (!userId || !ideaText || !industry) {
+            console.error('❌ Validation failed: Missing required parameters');
+            console.error(`   userId: ${userId ? '✓ Present' : '✗ Missing'}`);
+            console.error(`   ideaText: ${ideaText ? '✓ Present' : '✗ Missing'}`);
+            console.error(`   industry: ${industry ? '✓ Present' : '✗ Missing'}`);
             return {
                 idea: null,
                 analysis: null,
@@ -26,15 +30,16 @@ export async function createAndAnalyzeIdea(userId, ideaText, industry) {
         }
 
         console.log(`\n${'='.repeat(80)}`);
-        console.log(
-            `Starting idea creation and analysis pipeline for user: ${userId}`
-        );
+        console.log(`🚀 [PIPELINE START] Creating and analyzing startup idea`);
         console.log(`${'='.repeat(80)}`);
+        console.log(`\n👤 User ID: ${userId}`);
+        console.log(`📝 Idea Text: ${ideaText.substring(0, 80)}...`);
+        console.log(`🏭 Industry: ${industry}`);
 
         // ============================================================================
         // Step 1: Insert idea using createStartupIdea
         // ============================================================================
-        console.log('\n📝 Step 1: Creating startup idea...');
+        console.log('\n📝 Step 1: Creating startup idea in database...');
         const createResult = await createStartupIdea(userId, ideaText, industry);
 
         if (createResult.error) {
@@ -48,7 +53,9 @@ export async function createAndAnalyzeIdea(userId, ideaText, industry) {
         }
 
         const createdIdea = createResult.data;
-        console.log(`✅ Idea created successfully with ID: ${createdIdea.id}`);
+        console.log(`✅ Idea created successfully`);
+        console.log(`   💾 Inserted Idea ID: ${createdIdea.id}`);
+        console.log(`   🔗 Linked to User ID: ${createdIdea.user_id}`);
 
         // ============================================================================
         // Step 2: Extract inserted idea ID
@@ -66,12 +73,15 @@ export async function createAndAnalyzeIdea(userId, ideaText, industry) {
             };
         }
 
-        console.log(`✅ Idea ID extracted: ${ideaId}`);
+        console.log(`✅ Idea ID successfully extracted and verified`);
+        console.log(`   🆔 Idea ID: ${ideaId}`);
+        console.log(`   👤 User ID: ${userId}`);
+        console.log(`   🔗 Database Link: startup_ideas[${ideaId}].user_id = ${userId}`);
 
         // ============================================================================
         // Step 3: Call analyzeStartupIdea with ideaText and industry
         // ============================================================================
-        console.log('\n🤖 Step 3: Analyzing idea with AI...');
+        console.log('\n🤖 Step 3: Calling AI analysis service...');
         const analysisResult = await analyzeStartupIdea(ideaText, industry);
 
         if (analysisResult.error) {
@@ -85,16 +95,15 @@ export async function createAndAnalyzeIdea(userId, ideaText, industry) {
         }
 
         console.log(`✅ AI analysis completed successfully`);
-        console.log(`   Market Score: ${analysisResult.market_score}/10`);
-        console.log(
-            `   Competition Score: ${analysisResult.competition_score}/10`
-        );
-        console.log(`   Feasibility Score: ${analysisResult.feasibility_score}/10`);
+        console.log(`   📊 Market Score: ${analysisResult.market_score}/10`);
+        console.log(`   🏆 Competition Score: ${analysisResult.competition_score}/10`);
+        console.log(`   ⚙️ Feasibility Score: ${analysisResult.feasibility_score}/10`);
 
         // ============================================================================
         // Step 4: Store AI result using saveIdeaAnalysis with ideaId
         // ============================================================================
-        console.log('\n💾 Step 4: Storing analysis in database...');
+        console.log('\n💾 Step 4: Saving analysis to database...');
+        console.log(`   🆔 Saving analysis for Idea ID: ${ideaId}`);
 
         // Convert scores from 1-10 to 0-100 scale
         const marketScoreNormalized = Math.round(
@@ -126,13 +135,22 @@ export async function createAndAnalyzeIdea(userId, ideaText, industry) {
         }
 
         const savedAnalysis = saveResult.data;
-        console.log(`✅ Analysis stored successfully with ID: ${savedAnalysis.id}`);
+        console.log(`✅ Analysis stored successfully`);
+        console.log(`   💾 Analysis ID: ${savedAnalysis.id}`);
+        console.log(`   🆔 Linked to Idea ID: ${savedAnalysis.idea_id}`);
+        console.log(`   📊 Stored Scores: Market=${savedAnalysis.market_score}, Competition=${savedAnalysis.competition_score}, Feasibility=${savedAnalysis.feasibility_score}`);
 
         // ============================================================================
         // Step 5: Return idea and analysis
         // ============================================================================
         console.log(`\n${'='.repeat(80)}`);
-        console.log(`✨ Pipeline completed successfully!`);
+        console.log(`✨ [PIPELINE SUCCESS] Idea creation and analysis complete!`);
+        console.log(`${'='.repeat(80)}`);
+        console.log(`📌 Summary:`);
+        console.log(`   👤 User ID: ${userId}`);
+        console.log(`   💡 Idea ID: ${createdIdea.id}`);
+        console.log(`   📈 Analysis ID: ${savedAnalysis.id}`);
+        console.log(`   🔗 Database: startup_ideas[${createdIdea.id}] → idea_analysis[${savedAnalysis.id}]`);
         console.log(`${'='.repeat(80)}\n`);
 
         return {

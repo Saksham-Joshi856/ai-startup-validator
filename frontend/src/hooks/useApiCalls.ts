@@ -21,13 +21,18 @@ export function useGetIdeas(userId: string | null) {
     const [isTimeout, setIsTimeout] = useState(false);
 
     const fetchIdeas = async () => {
-        if (!userId) return;
+        if (!userId) {
+            console.warn('useGetIdeas: userId is null, skipping fetch');
+            return;
+        }
 
+        console.log(`🔄 [useGetIdeas] Fetching ideas for userId: ${userId}`);
         setLoading(true);
         setError(null);
         setIsTimeout(false);
 
         const timeoutId = setTimeout(() => {
+            console.warn(`⏱️ [useGetIdeas] Request timeout after ${API_TIMEOUT_MS}ms`);
             setIsTimeout(true);
             setLoading(false);
         }, API_TIMEOUT_MS);
@@ -35,19 +40,29 @@ export function useGetIdeas(userId: string | null) {
         try {
             const response = await ideaApi.getIdeas(userId);
             clearTimeout(timeoutId);
+
             if (response.success) {
+                console.log(`✅ [useGetIdeas] Successfully fetched ${response.data?.length || 0} ideas`);
+                if (response.data && response.data.length > 0) {
+                    console.log(`   First idea:`, response.data[0]);
+                }
                 setIdeas(response.data || []);
                 setIsTimeout(false);
             } else {
-                setError(response.error || 'Failed to fetch ideas');
+                const errorMsg = response.error || 'Failed to fetch ideas';
+                console.error(`❌ [useGetIdeas] Error:`, errorMsg);
+                setError(errorMsg);
             }
         } catch (err) {
             clearTimeout(timeoutId);
             if (isTimeoutError(err)) {
+                console.warn(`⏱️ [useGetIdeas] Timeout error`);
                 setIsTimeout(true);
                 setError('Server is slow. Data will load when ready.');
             } else {
-                setError(err instanceof Error ? err.message : 'Unknown error');
+                const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+                console.error(`❌ [useGetIdeas] Exception:`, errorMsg);
+                setError(errorMsg);
             }
         } finally {
             setLoading(false);

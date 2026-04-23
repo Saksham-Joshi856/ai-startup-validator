@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Lightbulb, Zap, TrendingUp, Users, Target, CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -75,8 +75,18 @@ export const ValidateIdeaPage = () => {
     const [ideaText, setIdeaText] = useState("");
     const [selectedIndustry, setSelectedIndustry] = useState("");
     const [currentStep, setCurrentStep] = useState(0);
+    const stepIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const { user } = useAuth();
     const { isLoading, error, data, analyzeIdea, reset } = useAnalyzeIdea();
+
+    // Cleanup interval on unmount
+    useEffect(() => {
+        return () => {
+            if (stepIntervalRef.current) {
+                clearInterval(stepIntervalRef.current);
+            }
+        };
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -87,12 +97,20 @@ export const ValidateIdeaPage = () => {
             return;
         }
 
+        // Clear any existing interval
+        if (stepIntervalRef.current) {
+            clearInterval(stepIntervalRef.current);
+        }
+
         setCurrentStep(0);
         // Simulate step progression
-        const stepInterval = setInterval(() => {
+        stepIntervalRef.current = setInterval(() => {
             setCurrentStep((prev) => {
                 if (prev >= ANALYSIS_STEPS.length - 1) {
-                    clearInterval(stepInterval);
+                    if (stepIntervalRef.current) {
+                        clearInterval(stepIntervalRef.current);
+                        stepIntervalRef.current = null;
+                    }
                     return prev;
                 }
                 return prev + 1;
@@ -229,8 +247,8 @@ export const ValidateIdeaPage = () => {
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: index * 0.2 }}
                                         className={`flex items-center gap-3 p-3 rounded-lg transition-all ${index <= currentStep
-                                                ? "bg-primary/10 border border-primary/30"
-                                                : "bg-secondary/20 border border-secondary/30"
+                                            ? "bg-primary/10 border border-primary/30"
+                                            : "bg-secondary/20 border border-secondary/30"
                                             }`}
                                     >
                                         {index < currentStep ? (
