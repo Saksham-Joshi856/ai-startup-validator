@@ -66,6 +66,90 @@ app.get('/api/test', (req, res) => {
     res.json({ message: 'Backend working' });
 });
 
+// Debug: Test OpenRouter API configuration
+app.get('/api/test-openrouter', async (req, res) => {
+    console.log('\n🧪 [/api/test-openrouter] Testing OpenRouter API configuration...');
+
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+        console.error('❌ OPENROUTER_API_KEY not configured');
+        return res.status(500).json({
+            success: false,
+            error: 'OPENROUTER_API_KEY environment variable not set',
+            details: 'Please add OPENROUTER_API_KEY to backend/.env'
+        });
+    }
+
+    console.log('   ✅ API Key is configured');
+    console.log(`   🔑 Key starts with: ${apiKey.substring(0, 20)}...`);
+
+    try {
+        console.log('   📡 Sending test request to OpenRouter...');
+        const testResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: 'mistralai/mistral-7b-instruct',
+                messages: [
+                    {
+                        role: 'user',
+                        content: 'Say hello in one word.',
+                    }
+                ],
+                temperature: 0.7,
+                max_tokens: 50,
+            }),
+        });
+
+        console.log(`   📡 Response status: ${testResponse.status}`);
+
+        const responseData = await testResponse.json();
+
+        if (!testResponse.ok) {
+            console.error('❌ OpenRouter API returned error:');
+            console.error('   Status:', testResponse.status);
+            console.error('   Response:', JSON.stringify(responseData).substring(0, 500));
+            return res.status(testResponse.status).json({
+                success: false,
+                error: `OpenRouter API error: ${testResponse.status}`,
+                details: responseData,
+            });
+        }
+
+        console.log('✅ OpenRouter API is working correctly');
+        console.log('   Response structure:', {
+            hasChoices: !!responseData.choices,
+            choicesLength: responseData.choices?.length,
+            hasMessage: !!responseData.choices?.[0]?.message,
+            hasContent: !!responseData.choices?.[0]?.message?.content,
+        });
+
+        return res.json({
+            success: true,
+            message: 'OpenRouter API is working correctly',
+            testResponse: {
+                status: testResponse.status,
+                model: responseData.model,
+                reply: responseData.choices?.[0]?.message?.content?.substring(0, 100),
+            }
+        });
+    } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        console.error('❌ Error testing OpenRouter API:');
+        console.error('   Error:', errorMsg);
+        console.error('   Stack:', error instanceof Error ? error.stack : 'N/A');
+
+        return res.status(500).json({
+            success: false,
+            error: `Failed to test OpenRouter API: ${errorMsg}`,
+            errorType: error?.constructor?.name,
+        });
+    }
+});
+
 // GET /api/getIdeas - Fetch all startup ideas
 app.get('/api/getIdeas', async (req, res) => {
     try {

@@ -563,79 +563,97 @@ export async function getAIAdvisorResponse(message, userId) {
         // Get API key
         const apiKey = process.env.OPENROUTER_API_KEY;
         if (!apiKey) {
-            console.error('❌ [getAIAdvisorResponse] OpenRouter API key not configured');
+            console.error('❌ [getAIAdvisorResponse] CRITICAL: OpenRouter API key not configured');
+            console.error('   Please set OPENROUTER_API_KEY in backend/.env');
             return {
                 response: null,
                 error: 'AI service is unavailable',
             };
         }
 
-        console.log('   🔄 Calling OpenRouter API...');
+        console.log('   🔄 Calling OpenRouter API (mistralai/mistral-7b-instruct)...');
+        console.log('   API URL: https://openrouter.ai/api/v1/chat/completions');
 
         // Call OpenRouter API with timeout
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-        const apiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                model: 'mistralai/mistral-7b-instruct',
-                messages: [
-                    {
-                        role: 'system',
-                        content: 'You are a startup mentor helping founders validate ideas, identify risks, and suggest improvements. Be practical and concise.',
-                    },
-                    {
-                        role: 'user',
-                        content: message,
-                    },
-                ],
-                temperature: 0.7,
-                max_tokens: 500,
-            }),
-            signal: controller.signal,
-        });
+        try {
+            const apiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    model: 'mistralai/mistral-7b-instruct',
+                    messages: [
+                        {
+                            role: 'system',
+                            content: 'You are a startup mentor helping founders validate ideas, identify risks, and suggest improvements. Be practical and concise.',
+                        },
+                        {
+                            role: 'user',
+                            content: message,
+                        },
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 500,
+                }),
+                signal: controller.signal,
+            });
 
-        clearTimeout(timeout);
+            clearTimeout(timeout);
 
-        // Check if response is successful
-        if (!apiResponse.ok) {
-            const errorData = await apiResponse.json().catch(() => ({}));
-            const errorMsg = errorData.error?.message || `API error: ${apiResponse.status}`;
-            console.error(`❌ [getAIAdvisorResponse] OpenRouter API error (${apiResponse.status}):`, errorMsg);
+            console.log(`   📡 API Response Status: ${apiResponse.status}`);
+
+            // Check if response is successful
+            if (!apiResponse.ok) {
+                let errorMsg = `API error: ${apiResponse.status}`;
+                try {
+                    const errorData = await apiResponse.json();
+                    console.error('   📦 API Response Body:', JSON.stringify(errorData).substring(0, 300));
+                    if (errorData.error) {
+                        errorMsg = errorData.error.message || JSON.stringify(errorData.error).substring(0, 200);
+                    }
+                } catch (e) {
+                    console.error('   ⚠️  Could not parse error response body');
+                }
+                console.error(`❌ [getAIAdvisorResponse] OpenRouter API error (${apiResponse.status}):`, errorMsg);
+                return {
+                    response: null,
+                    error: 'Sorry, AI is currently unavailable.',
+                };
+            }
+
+            // Parse response
+            const responseData = await apiResponse.json();
+            console.log('   ✅ Received valid OpenRouter response');
+            console.log(`   Response has choices: ${!!responseData.choices}`);
+
+            // Validate response structure
+            if (!responseData.choices || !responseData.choices[0] || !responseData.choices[0].message || !responseData.choices[0].message.content) {
+                console.error('❌ [getAIAdvisorResponse] Invalid response structure from OpenRouter');
+                console.error('   Response:', JSON.stringify(responseData).substring(0, 300));
+                return {
+                    response: null,
+                    error: 'Sorry, AI is currently unavailable.',
+                };
+            }
+
+            const reply = responseData.choices[0].message.content.trim();
+            console.log(`   📝 AI Reply Length: ${reply.length} chars`);
+            console.log(`   📝 AI Reply Preview: ${reply.substring(0, 80)}${reply.length > 80 ? '...' : ''}`);
+            console.log(`✅ [getAIAdvisorResponse] Successfully generated advisor response`);
+
             return {
-                response: null,
-                error: 'Sorry, AI is currently unavailable.',
+                response: reply,
+                error: null,
             };
+        } catch (fetchError) {
+            clearTimeout(timeout);
+            throw fetchError; // Let outer catch handle it
         }
-
-        // Parse response
-        const responseData = await apiResponse.json();
-        console.log('   ✅ Received OpenRouter response');
-        console.log(`   Response status: ${apiResponse.status}`);
-
-        // Validate response structure
-        if (!responseData.choices || !responseData.choices[0] || !responseData.choices[0].message || !responseData.choices[0].message.content) {
-            console.error('❌ [getAIAdvisorResponse] Invalid response structure from OpenRouter');
-            console.error('   Response:', JSON.stringify(responseData).substring(0, 200));
-            return {
-                response: null,
-                error: 'Sorry, AI is currently unavailable.',
-            };
-        }
-
-        const reply = responseData.choices[0].message.content.trim();
-        console.log(`   📝 AI Reply: ${reply.substring(0, 80)}${reply.length > 80 ? '...' : ''}`);
-        console.log(`✅ [getAIAdvisorResponse] Successfully generated advisor response`);
-
-        return {
-            response: reply,
-            error: null,
-        };
     } catch (exception) {
         // Handle timeout
         if (exception.name === 'AbortError') {
@@ -646,9 +664,20 @@ export async function getAIAdvisorResponse(message, userId) {
             };
         }
 
+        // Handle fetch/network errors
+        if (exception instanceof TypeError && exception.message.includes('fetch')) {
+            console.error('❌ [getAIAdvisorResponse] Network error calling OpenRouter API:');
+            console.error('   Error:', exception.message);
+            return {
+                response: null,
+                error: 'Sorry, AI is currently unavailable.',
+            };
+        }
+
         // Handle other errors
         const errorMessage = exception instanceof Error ? exception.message : 'Unknown error occurred';
         console.error('❌ [getAIAdvisorResponse] Exception:', errorMessage);
+        console.error('   Type:', exception.constructor?.name);
         console.error('   Stack:', exception instanceof Error ? exception.stack : 'N/A');
 
         return {
