@@ -15,7 +15,7 @@ import cors from 'cors';
 import { getAllStartupIdeas, getUserStartupIdeas } from './services/ideaService.js';
 import { getIdeaAnalysis } from './services/analysisService.js';
 import { createAndAnalyzeIdea } from './services/ideaPipelineService.js';
-import { getAdvisorResponse, generateSmartSuggestions } from './services/aiService.js';
+import { getAdvisorResponse, generateSmartSuggestions, getAIAdvisorResponse } from './services/aiService.js';
 import { getSupabaseClient } from './config/supabaseClient.js';
 
 const app = express();
@@ -500,84 +500,59 @@ app.get('/api/dashboard-stats', async (req, res) => {
 // POST /api/ai-advisor - Chat with AI advisor (Startup Mentor)
 app.post('/api/ai-advisor', async (req, res) => {
     try {
-        const { userId, message } = req.body;
+        const { message, userId } = req.body;
 
-        if (!userId || !message) {
+        // Validate message parameter
+        if (!message) {
+            console.error('❌ [/api/ai-advisor] Missing message parameter');
             return res.status(400).json({
                 success: false,
-                error: 'Missing required fields: userId or message',
+                error: 'Missing required field: message',
             });
         }
 
-        // Fetch user context for the mentor
-        let context = {};
-
-        try {
-            const supabase = getSupabaseClient();
-
-            // Get user's past ideas
-            const { data: ideasData } = await supabase
-                .from('startup_ideas')
-                .select('id, description, industry, created_at')
-                .eq('user_id', userId)
-                .order('created_at', { ascending: false })
-                .limit(5);
-
-            if (ideasData && ideasData.length > 0) {
-                context.pastIdeas = ideasData.map(idea => ({
-                    id: idea.id,
-                    title: idea.description?.split('\n')[0]?.substring(0, 50) || 'Untitled',
-                    description: idea.description,
-                    industry: idea.industry,
-                    created_at: idea.created_at,
-                }));
-
-                // Get latest analysis for context
-                if (ideasData[0]) {
-                    const { data: analysisData } = await supabase
-                        .from('idea_analysis')
-                        .select('market_score, competition_score, feasibility_score, analysis_text')
-                        .eq('idea_id', ideasData[0].id)
-                        .single();
-
-                    if (analysisData) {
-                        context.latestAnalysis = {
-                            market_score: analysisData.market_score,
-                            competition_score: analysisData.competition_score,
-                            feasibility_score: analysisData.feasibility_score,
-                        };
-                    }
-
-                    // Get industry from latest idea
-                    context.industry = ideasData[0].industry;
-                }
-            }
-        } catch (contextError) {
-            console.warn('Warning: Could not fetch user context:', contextError.message);
-            // Continue without context if fetch fails
+        // Validate userId parameter
+        if (!userId) {
+            console.error('❌ [/api/ai-advisor] Missing userId parameter');
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required field: userId',
+            });
         }
 
-        // Call AI service to generate mentor response with context
-        const result = await getAdvisorResponse(message, context);
+        console.log(`\n💬 [/api/ai-advisor] Processing advisor request`);
+        console.log(`   User ID: ${userId}`);
+        console.log(`   Message: ${message.substring(0, 50)}...`);
 
+        // Call the robust AI advisor function
+        const result = await getAIAdvisorResponse(message, userId);
+
+        // Log result
+        console.log(`   Result: success=${!result.error}`);
         if (result.error) {
-            console.error('Error generating mentor response:', result.error);
+            console.log(`   Error: ${result.error}`);
+        }
+
+        // Handle error response from AI service
+        if (result.error) {
+            console.error('❌ [/api/ai-advisor] AI advisor error:', result.error);
             return res.status(500).json({
                 success: false,
-                error: result.error,
+                error: 'AI failed',
             });
         }
 
+        console.log(`✅ [/api/ai-advisor] Successfully returned AI response`);
         res.json({
             success: true,
-            data: {
-                response: result.response,
-            },
-            timestamp: new Date().toISOString(),
+            reply: result.response,
         });
     } catch (error) {
-        console.error('Error in ai-advisor endpoint:', error);
-        res.status(500).json({ success: false, error: 'Internal server error' });
+        console.error('❌ [/api/ai-advisor] Unexpected error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'AI failed',
+        });
     }
 });
 

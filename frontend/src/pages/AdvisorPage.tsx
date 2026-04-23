@@ -1,12 +1,12 @@
 import { motion } from "framer-motion";
-import { Bot, Send, Loader2 } from "lucide-react";
+import { Bot, Send, Loader2, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAIAdvisor } from "@/hooks/useApiCalls";
 
 export const AdvisorPage = () => {
     const { user } = useAuth();
-    const { sendMessage, loading } = useAIAdvisor();
+    const { sendMessage, loading, error } = useAIAdvisor();
     const [messages, setMessages] = useState([
         {
             id: 1,
@@ -18,27 +18,43 @@ export const AdvisorPage = () => {
     const [input, setInput] = useState("");
 
     const handleSendMessage = async () => {
-        if (input.trim() && user?.id) {
-            // Add user message
-            const userMessage = {
-                id: messages.length + 1,
-                text: input,
-                sender: "user",
+        if (!input.trim() || !user?.id) return;
+
+        console.log('📤 [AdvisorPage] Sending message...');
+
+        // Add user message
+        const userMessage = {
+            id: messages.length + 1,
+            text: input,
+            sender: "user" as const,
+            timestamp: new Date(),
+        };
+        setMessages([...messages, userMessage]);
+        const userInput = input;
+        setInput("");
+
+        // Get AI response
+        const aiResponse = await sendMessage(user.id, userInput);
+        if (aiResponse) {
+            console.log('📥 [AdvisorPage] Received AI response');
+            const aiMessage = {
+                id: messages.length + 2,
+                text: aiResponse,
+                sender: "ai" as const,
                 timestamp: new Date(),
             };
-            setMessages([...messages, userMessage]);
-            setInput("");
-
-            // Get AI response
-            const aiResponse = await sendMessage(user.id, input);
-            if (aiResponse) {
-                const aiMessage = {
+            setMessages((prev) => [...prev, aiMessage]);
+        } else {
+            console.warn('⚠️  [AdvisorPage] No response from AI');
+            // Optionally show error message in chat
+            if (error) {
+                const errorMessage = {
                     id: messages.length + 2,
-                    text: aiResponse,
-                    sender: "ai",
+                    text: error || "AI is unavailable, try again",
+                    sender: "ai" as const,
                     timestamp: new Date(),
                 };
-                setMessages((prev) => [...prev, aiMessage]);
+                setMessages((prev) => [...prev, errorMessage]);
             }
         }
     };
@@ -75,6 +91,18 @@ export const AdvisorPage = () => {
                         transition={{ delay: 0.1, duration: 0.5 }}
                         className="glass-effect rounded-xl border border-accent/10 p-4 h-full flex flex-col"
                     >
+                        {/* Error Banner */}
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center gap-2"
+                            >
+                                <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                <p className="text-sm text-red-500">{error}</p>
+                            </motion.div>
+                        )}
+
                         {/* Messages */}
                         <div className="flex-1 overflow-y-auto mb-4 space-y-4">
                             {messages.map((msg, i) => (
@@ -100,8 +128,9 @@ export const AdvisorPage = () => {
                             ))}
                             {loading && (
                                 <div className="flex justify-start">
-                                    <div className="bg-accent/20 text-accent px-4 py-2 rounded-lg rounded-bl-none">
+                                    <div className="bg-accent/20 text-accent px-4 py-2 rounded-lg rounded-bl-none flex items-center gap-2">
                                         <Loader2 className="w-4 h-4 animate-spin" />
+                                        <span className="text-sm">AI is thinking...</span>
                                     </div>
                                 </div>
                             )}

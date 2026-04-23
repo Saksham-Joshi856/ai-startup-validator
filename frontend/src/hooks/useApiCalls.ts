@@ -239,34 +239,49 @@ export function useAIAdvisor() {
     const [isTimeout, setIsTimeout] = useState(false);
 
     const sendMessage = async (userId: string, message: string) => {
+        console.log('\n🤖 [useAIAdvisor] Sending message to AI advisor');
+        console.log(`   User ID: ${userId}`);
+        console.log(`   Message: ${message.substring(0, 50)}...`);
+
         setLoading(true);
         setError(null);
         setIsTimeout(false);
 
         const timeoutId = setTimeout(() => {
+            console.warn('⚠️  [useAIAdvisor] Request timeout');
             setIsTimeout(true);
             setLoading(false);
             setError('AI is thinking... This may take a moment.');
         }, API_TIMEOUT_MS);
 
         try {
+            console.log('   📡 Calling API...');
             const response = await advisorApi.sendMessage(userId, message);
+
             clearTimeout(timeoutId);
-            if (response.success) {
+
+            if (response.success && response.data?.reply) {
+                console.log('✅ [useAIAdvisor] Received AI response');
                 setIsTimeout(false);
-                return response.data?.response || 'No response received';
+                const reply = response.data.reply;
+                console.log(`   Reply: ${reply.substring(0, 50)}...`);
+                return reply;
             } else {
-                setError(response.error || 'Failed to send message');
+                const errorMsg = response.error || 'Failed to send message';
+                console.error('❌ [useAIAdvisor] API error:', errorMsg);
+                setError(errorMsg);
                 return null;
             }
         } catch (err) {
             clearTimeout(timeoutId);
             if (isTimeoutError(err)) {
+                console.warn('⚠️  [useAIAdvisor] Timeout error');
                 setIsTimeout(true);
                 setError('AI is thinking... This may take a moment.');
             } else {
                 const errorMsg = err instanceof Error ? err.message : 'Unknown error';
-                setError(errorMsg);
+                console.error('❌ [useAIAdvisor] Exception:', errorMsg);
+                setError('AI is unavailable, try again');
             }
             return null;
         } finally {

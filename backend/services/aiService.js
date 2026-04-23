@@ -530,3 +530,130 @@ Generate 3 unique, actionable suggestions as JSON array.`;
         };
     }
 }
+
+/**
+ * Get AI advisor response for chatbot using OpenRouter API
+ * @param message - The user message
+ * @param userId - The user ID
+ * @returns Object containing { response, error }
+ */
+export async function getAIAdvisorResponse(message, userId) {
+    try {
+        // Validate input parameters
+        if (!message || message.trim().length === 0) {
+            console.error('❌ [getAIAdvisorResponse] Empty message provided');
+            return {
+                response: null,
+                error: 'Message cannot be empty',
+            };
+        }
+
+        if (!userId) {
+            console.error('❌ [getAIAdvisorResponse] Missing userId');
+            return {
+                response: null,
+                error: 'User ID is required',
+            };
+        }
+
+        console.log('\n💬 [getAIAdvisorResponse] Processing advisor request');
+        console.log(`   User ID: ${userId}`);
+        console.log(`   Message: ${message.substring(0, 80)}${message.length > 80 ? '...' : ''}`);
+
+        // Get API key
+        const apiKey = process.env.OPENROUTER_API_KEY;
+        if (!apiKey) {
+            console.error('❌ [getAIAdvisorResponse] OpenRouter API key not configured');
+            return {
+                response: null,
+                error: 'AI service is unavailable',
+            };
+        }
+
+        console.log('   🔄 Calling OpenRouter API...');
+
+        // Call OpenRouter API with timeout
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+        const apiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: 'mistralai/mistral-7b-instruct',
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'You are a startup mentor helping founders validate ideas, identify risks, and suggest improvements. Be practical and concise.',
+                    },
+                    {
+                        role: 'user',
+                        content: message,
+                    },
+                ],
+                temperature: 0.7,
+                max_tokens: 500,
+            }),
+            signal: controller.signal,
+        });
+
+        clearTimeout(timeout);
+
+        // Check if response is successful
+        if (!apiResponse.ok) {
+            const errorData = await apiResponse.json().catch(() => ({}));
+            const errorMsg = errorData.error?.message || `API error: ${apiResponse.status}`;
+            console.error(`❌ [getAIAdvisorResponse] OpenRouter API error (${apiResponse.status}):`, errorMsg);
+            return {
+                response: null,
+                error: 'Sorry, AI is currently unavailable.',
+            };
+        }
+
+        // Parse response
+        const responseData = await apiResponse.json();
+        console.log('   ✅ Received OpenRouter response');
+        console.log(`   Response status: ${apiResponse.status}`);
+
+        // Validate response structure
+        if (!responseData.choices || !responseData.choices[0] || !responseData.choices[0].message || !responseData.choices[0].message.content) {
+            console.error('❌ [getAIAdvisorResponse] Invalid response structure from OpenRouter');
+            console.error('   Response:', JSON.stringify(responseData).substring(0, 200));
+            return {
+                response: null,
+                error: 'Sorry, AI is currently unavailable.',
+            };
+        }
+
+        const reply = responseData.choices[0].message.content.trim();
+        console.log(`   📝 AI Reply: ${reply.substring(0, 80)}${reply.length > 80 ? '...' : ''}`);
+        console.log(`✅ [getAIAdvisorResponse] Successfully generated advisor response`);
+
+        return {
+            response: reply,
+            error: null,
+        };
+    } catch (exception) {
+        // Handle timeout
+        if (exception.name === 'AbortError') {
+            console.error('❌ [getAIAdvisorResponse] Request timeout (30s exceeded)');
+            return {
+                response: null,
+                error: 'Sorry, AI is currently unavailable.',
+            };
+        }
+
+        // Handle other errors
+        const errorMessage = exception instanceof Error ? exception.message : 'Unknown error occurred';
+        console.error('❌ [getAIAdvisorResponse] Exception:', errorMessage);
+        console.error('   Stack:', exception instanceof Error ? exception.stack : 'N/A');
+
+        return {
+            response: null,
+            error: 'Sorry, AI is currently unavailable.',
+        };
+    }
+}

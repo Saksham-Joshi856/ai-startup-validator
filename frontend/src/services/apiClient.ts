@@ -141,13 +141,44 @@ export const advisorApi = {
     async sendMessage(
         userId: string,
         message: string
-    ): Promise<ApiResponse<{ response: string }>> {
-        const response = await fetch(`${API_BASE_URL}/api/ai-advisor`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, message }),
-        });
-        return handleResponse(response);
+    ): Promise<ApiResponse<{ reply: string }>> {
+        console.log('📨 [advisorApi.sendMessage] Sending message to advisor');
+        console.log(`   User ID: ${userId}`);
+        console.log(`   Message: ${message.substring(0, 50)}...`);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/ai-advisor`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, message }),
+            });
+
+            console.log(`   Response status: ${response.status}`);
+            const data = await response.json();
+
+            if (!response.ok) {
+                console.error('❌ [advisorApi.sendMessage] API error:', data.error);
+                return {
+                    success: false,
+                    error: data.error || 'Failed to get AI response',
+                };
+            }
+
+            console.log('✅ [advisorApi.sendMessage] Successfully received AI response');
+            console.log(`   Reply: ${data.reply?.substring(0, 50)}...`);
+
+            return {
+                success: true,
+                data: { reply: data.reply || '' },
+            };
+        } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+            console.error('❌ [advisorApi.sendMessage] Fetch error:', errorMsg);
+            return {
+                success: false,
+                error: 'Network error - unable to reach AI service',
+            };
+        }
     },
 };
 
