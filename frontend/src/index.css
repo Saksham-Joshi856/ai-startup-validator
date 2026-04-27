@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "./styles/ux-enhancements.css";
 
 @tailwind base;
 @tailwind components;
@@ -148,9 +149,6 @@
     @apply bg-card/60 backdrop-blur-sm border border-border/50 rounded-lg;
   }
 }
-
-/* Import UX/UI enhancement styles */
-@import "./styles/ux-enhancements.css";
 
 /* Animated gradient border wrapper */
 .gradient-border-card {
