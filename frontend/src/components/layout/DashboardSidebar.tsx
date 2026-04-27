@@ -23,15 +23,15 @@ export function DashboardSidebar() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <aside className="w-64 h-screen flex flex-col border-r border-border/20 bg-background">
+    <aside className="w-64 h-screen flex flex-col border-r border-default bg-surface-primary">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 h-16 border-b border-border/10">
+      <div className="flex items-center gap-3 px-6 h-16 border-b border-subtle">
         <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
-          <span className="text-white font-bold text-sm">AI</span>
+          <span className="text-primary-foreground font-bold text-sm">AI</span>
         </div>
         <div className="flex flex-col">
-          <span className="font-bold text-sm text-foreground">AI Validator</span>
-          <span className="text-[11px] text-muted-foreground">Pro</span>
+          <span className="font-bold text-sm text-primary heading-sm">AI Validator</span>
+          <span className="text-[11px] text-muted label-sm">Pro</span>
         </div>
       </div>
 
@@ -59,22 +59,22 @@ export function DashboardSidebar() {
               )}
 
               {/* Hover background */}
-              <div className={`absolute inset-0 rounded-lg transition-colors duration-200 ${active ? "" : "hover:bg-muted/50"
+              <div className={`absolute inset-0 rounded-lg transition-colors duration-200 ${active ? "" : "hover:bg-surface-secondary"
                 }`} />
 
               {/* Icon */}
               <Icon
                 className={`w-5 h-5 relative z-10 transition-colors duration-200 ${active
-                    ? "text-primary"
-                    : "text-muted-foreground group-hover:text-foreground"
+                  ? "text-primary"
+                  : "text-muted hover:text-secondary"
                   }`}
               />
 
               {/* Label */}
               <span
                 className={`relative z-10 transition-colors duration-200 ${active
-                    ? "text-primary font-semibold"
-                    : "text-muted-foreground"
+                  ? "text-primary font-semibold"
+                  : "text-muted"
                   }`}
               >
                 {item.label}
@@ -85,11 +85,11 @@ export function DashboardSidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-4 py-4 border-t border-border/10">
-        <div className="rounded-lg bg-muted/30 p-3">
-          <p className="text-xs font-semibold text-foreground mb-2">Pro Plan</p>
-          <p className="text-xs text-muted-foreground mb-2">2,847 / 5,000 validations</p>
-          <div className="h-2 rounded-full bg-muted overflow-hidden">
+      <div className="px-4 py-4 border-t border-subtle">
+        <div className="rounded-lg bg-surface-secondary p-3">
+          <p className="text-xs font-semibold text-primary label-sm mb-2">Pro Plan</p>
+          <p className="text-xs text-muted label-sm mb-2">2,847 / 5,000 validations</p>
+          <div className="h-2 rounded-full bg-surface-tertiary overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: "57%" }}

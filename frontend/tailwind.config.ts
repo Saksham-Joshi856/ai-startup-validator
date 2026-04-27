@@ -60,6 +60,21 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        /* Semantic token colors */
+        text: {
+          primary: "hsl(var(--text-primary))",
+          secondary: "hsl(var(--text-secondary))",
+          muted: "hsl(var(--text-muted))",
+          disabled: "hsl(var(--text-disabled))",
+        },
+        surface: {
+          primary: "hsl(var(--surface-primary))",
+          secondary: "hsl(var(--surface-secondary))",
+          tertiary: "hsl(var(--surface-tertiary))",
+        },
+        "border-default": "hsl(var(--border-default))",
+        "border-subtle": "hsl(var(--border-subtle))",
+        "border-strong": "hsl(var(--border-strong))",
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -7,6 +7,7 @@
 
 @layer base {
   :root {
+    /* Light mode - Core colors with improved contrast */
     --background: 0 0% 100%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
@@ -37,9 +38,26 @@
     --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 214 32% 91%;
     --sidebar-ring: 221 83% 53%;
+
+    /* Semantic text colors - Light mode */
+    --text-primary: 222 47% 11%;
+    --text-secondary: 217 12% 33%;
+    --text-muted: 217 14% 46%;
+    --text-disabled: 217 14% 66%;
+
+    /* Semantic surface colors - Light mode */
+    --surface-primary: 0 0% 100%;
+    --surface-secondary: 210 40% 96%;
+    --surface-tertiary: 210 40% 92%;
+
+    /* Border colors - Light mode */
+    --border-default: 214 32% 91%;
+    --border-subtle: 214 32% 95%;
+    --border-strong: 214 32% 80%;
   }
 
   .dark {
+    /* Dark mode - Improved readability */
     --background: 228 84% 5%;
     --foreground: 213 31% 91%;
     --card: 225 71% 7%;
@@ -69,6 +87,22 @@
     --sidebar-accent-foreground: 213 31% 91%;
     --sidebar-border: 216 34% 17%;
     --sidebar-ring: 217 91% 60%;
+
+    /* Semantic text colors - Dark mode */
+    --text-primary: 213 31% 91%;
+    --text-secondary: 213 26% 75%;
+    --text-muted: 213 20% 60%;
+    --text-disabled: 213 15% 45%;
+
+    /* Semantic surface colors - Dark mode */
+    --surface-primary: 225 71% 7%;
+    --surface-secondary: 223 47% 11%;
+    --surface-tertiary: 220 37% 15%;
+
+    /* Border colors - Dark mode */
+    --border-default: 216 34% 17%;
+    --border-subtle: 216 34% 12%;
+    --border-strong: 216 34% 25%;
   }
 }
 
@@ -106,6 +140,134 @@
 
   .padding-desktop {
     @apply md:px-8;
+  }
+
+  /* ============================================================
+     SEMANTIC TEXT COLORS - Readable & Accessible
+     ============================================================ */
+
+  .text-primary {
+    color: hsl(var(--text-primary));
+  }
+
+  .text-secondary {
+    color: hsl(var(--text-secondary));
+  }
+
+  .text-muted {
+    color: hsl(var(--text-muted));
+  }
+
+  .text-disabled {
+    color: hsl(var(--text-disabled));
+  }
+
+  /* ============================================================
+     SEMANTIC SURFACE & BACKGROUND COLORS
+     ============================================================ */
+
+  .bg-surface-primary {
+    background-color: hsl(var(--surface-primary));
+  }
+
+  .bg-surface-secondary {
+    background-color: hsl(var(--surface-secondary));
+  }
+
+  .bg-surface-tertiary {
+    background-color: hsl(var(--surface-tertiary));
+  }
+
+  /* ============================================================
+     SEMANTIC BORDER COLORS
+     ============================================================ */
+
+  .border-default {
+    border-color: hsl(var(--border-default));
+  }
+
+  .border-subtle {
+    border-color: hsl(var(--border-subtle));
+  }
+
+  .border-strong {
+    border-color: hsl(var(--border-strong));
+  }
+
+  /* ============================================================
+     TYPOGRAPHY HIERARCHY
+     ============================================================ */
+
+  .heading-xl {
+    @apply text-2xl font-semibold text-primary;
+  }
+
+  .heading-lg {
+    @apply text-xl font-semibold text-primary;
+  }
+
+  .heading-md {
+    @apply text-lg font-semibold text-primary;
+  }
+
+  .heading-sm {
+    @apply text-base font-semibold text-primary;
+  }
+
+  .subheading {
+    @apply text-lg text-secondary;
+  }
+
+  .body-lg {
+    @apply text-base text-secondary;
+  }
+
+  .body-md {
+    @apply text-sm text-secondary;
+  }
+
+  .body-sm {
+    @apply text-xs text-muted;
+  }
+
+  .label-md {
+    @apply text-sm font-medium text-muted;
+  }
+
+  .label-sm {
+    @apply text-xs font-medium text-muted;
+  }
+
+  /* ============================================================
+     ENHANCED CARD STYLES WITH PROPER CONTRAST
+     ============================================================ */
+
+  .card-clean {
+    @apply rounded-lg border border-default bg-surface-primary p-6 transition-colors duration-200 hover:bg-surface-secondary;
+  }
+
+  .card-interactive {
+    @apply card-clean cursor-pointer hover:shadow-sm;
+  }
+
+  .card-secondary {
+    @apply rounded-lg border border-subtle bg-surface-secondary p-6 transition-colors duration-200;
+  }
+
+  /* ============================================================
+     BUTTON STYLES WITH PROPER CONTRAST
+     ============================================================ */
+
+  .btn-primary {
+    @apply px-4 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:opacity-90 transition-opacity duration-200 active:opacity-75 disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-surface-secondary text-primary border border-default font-medium rounded-lg hover:bg-surface-tertiary transition-colors duration-200;
+  }
+
+  .btn-ghost {
+    @apply px-4 py-2 text-primary hover:bg-surface-secondary rounded-lg transition-colors duration-200;
   }
 
   /* Card Styles - Clean SaaS */

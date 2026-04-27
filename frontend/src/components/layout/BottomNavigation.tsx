@@ -26,7 +26,7 @@ export function BottomNavigation() {
         <motion.nav
             initial={{ y: 100 }}
             animate={{ y: 0 }}
-            className="fixed bottom-0 left-0 right-0 h-20 bg-card/80 backdrop-blur-md border-t border-border/30 flex items-center justify-around px-2 z-50 md:hidden"
+            className="fixed bottom-0 left-0 right-0 h-20 bg-surface-primary/80 backdrop-blur-md border-t border-default flex items-center justify-around px-2 z-50 md:hidden"
         >
             {navItems.map((item) => {
                 const Icon = item.icon;
@@ -51,16 +51,16 @@ export function BottomNavigation() {
                         {/* Icon */}
                         <Icon
                             className={`w-6 h-6 relative z-10 transition-colors duration-200 ${active
-                                    ? "text-primary"
-                                    : "text-muted-foreground"
+                                ? "text-primary"
+                                : "text-muted"
                                 }`}
                         />
 
                         {/* Label */}
                         <span
-                            className={`text-[10px] font-medium relative z-10 transition-colors duration-200 ${active
-                                    ? "text-primary"
-                                    : "text-muted-foreground"
+                            className={`text-[10px] font-medium relative z-10 transition-colors duration-200 label-sm ${active
+                                ? "text-primary"
+                                : "text-muted"
                                 }`}
                         >
                             {item.label}
