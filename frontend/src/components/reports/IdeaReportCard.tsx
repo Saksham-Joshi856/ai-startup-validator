@@ -3,12 +3,14 @@ import {
     Trash2,
     RotateCcw,
     ChevronRight,
-    TrendingUp,
     Layers,
     ChevronDown,
+    TrendingUp,
+    Crosshair,
+    Zap,
 } from 'lucide-react';
 import { useState } from 'react';
-import { ScoreIndicator } from '@/components/dashboard/ScoreIndicator';
+import { ScoreRing } from './ScoreRing';
 
 export interface IdeaReportCardProps {
     id: string;
@@ -35,10 +37,14 @@ const cardVariants = {
         transition: { type: 'spring', stiffness: 100, damping: 15 },
     },
     hover: {
-        y: -4,
-        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
+        y: -2,
         transition: { type: 'spring', stiffness: 200, damping: 20 },
     },
+};
+
+const expandVariants = {
+    collapsed: { height: 0, opacity: 0 },
+    expanded: { height: 'auto', opacity: 1, transition: { duration: 0.3 } },
 };
 
 export const IdeaReportCard = ({
@@ -63,211 +69,242 @@ export const IdeaReportCard = ({
         (marketScore + (100 - competitionScore) + feasibilityScore) / 3
     );
 
-    const getScoreHealth = (score: number) => {
-        if (score >= 70) return { label: 'Strong', color: 'text-emerald-500' };
-        if (score >= 50) return { label: 'Moderate', color: 'text-yellow-500' };
-        return { label: 'Low', color: 'text-red-500' };
-    };
-
-    const health = getScoreHealth(avgScore);
-
-    const expandVariants = {
-        collapsed: { height: 0, opacity: 0 },
-        expanded: { height: 'auto', opacity: 1, transition: { duration: 0.3 } },
+    const getScoreColor = (score: number) => {
+        if (score >= 80) return {
+            badge: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+            text: 'text-green-700 dark:text-green-400',
+            bar: 'from-green-500 to-green-600',
+            label: 'Excellent'
+        };
+        if (score >= 60) return {
+            badge: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+            text: 'text-yellow-700 dark:text-yellow-400',
+            bar: 'from-yellow-500 to-yellow-600',
+            label: 'Good'
+        };
+        return {
+            badge: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+            text: 'text-red-700 dark:text-red-400',
+            bar: 'from-red-500 to-red-600',
+            label: 'Needs Work'
+        };
     };
 
     return (
         <motion.div
             variants={cardVariants}
             whileHover="hover"
-            className={`relative group rounded-lg border transition-all duration-300 overflow-hidden ${isSelected
-                ? 'bg-gradient-to-br from-primary/10 to-primary/5 border-primary/40'
-                : 'bg-gradient-to-br from-slate-900/50 to-slate-800/30 border-slate-700/40 hover:border-primary/40'
-                }`}
+            className="rounded-xl border border-default shadow-sm hover:shadow-md transition-shadow duration-300 bg-surface-primary overflow-hidden"
         >
-            {/* Background gradient animation */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 group-hover:opacity-5 transition-opacity duration-500" />
-
-            {/* Content */}
-            <div className="relative z-10">
-                <div className="p-5">
-                    {/* Header */}
-                    <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1 min-w-0">
-                            <h3 className="font-bold text-foreground truncate text-lg mb-2">
-                                {title || 'Untitled Idea'}
-                            </h3>
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-xs font-medium px-3 py-1 rounded-full bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30 transition-colors">
-                                    {industry}
-                                </span>
-                                <span className="text-xs text-muted-foreground/70">
-                                    {new Date(createdAt).toLocaleDateString('en-US', {
-                                        month: 'short',
-                                        day: 'numeric',
-                                        year: 'numeric'
-                                    })}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Avg Score Badge */}
-                        <div className="ml-4 text-right">
-                            <motion.div
-                                className={`text-3xl font-black ${health.color}`}
-                                initial={{ scale: 0.8 }}
-                                animate={{ scale: 1 }}
-                                transition={{ type: 'spring', stiffness: 100 }}
-                            >
-                                {avgScore}
-                            </motion.div>
-                            <span className="text-xs font-semibold text-muted-foreground block mt-1">
-                                {health.label}
+            <div className="p-6 space-y-6">
+                {/* Header: Title and Score */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                        <h3 className="heading-lg text-primary truncate mb-2">
+                            {title || 'Untitled Idea'}
+                        </h3>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-semibold">
+                                {industry}
+                            </span>
+                            <span className="text-xs text-muted label-sm">
+                                {new Date(createdAt).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                })}
                             </span>
                         </div>
                     </div>
 
-                    {/* Description */}
-                    {description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
-                            {description}
-                        </p>
-                    )}
+                    {/* Score Ring */}
+                    <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: 0.1, duration: 0.5 }}
+                        className="shrink-0"
+                    >
+                        <ScoreRing score={avgScore} size={90} strokeWidth={7} label={getScoreColor(avgScore).label} />
+                    </motion.div>
+                </div>
 
-                    {/* Score Breakdown with Progress Bars */}
-                    <div className="mb-4 p-3 rounded-lg bg-slate-800/30 backdrop-blur-sm border border-slate-700/20">
-                        <div className="flex items-center gap-2 mb-3">
-                            <TrendingUp className="w-4 h-4 text-primary/70" />
-                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Score Breakdown</span>
+                {/* Divider */}
+                <div className="h-px bg-border-subtle" />
+
+                {/* Description */}
+                {description && (
+                    <p className="body-md text-secondary line-clamp-2 leading-relaxed">
+                        {description}
+                    </p>
+                )}
+
+                {/* Score Breakdown Section */}
+                <div className="space-y-4">
+                    <h4 className="label-md text-primary flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4" />
+                        Score Breakdown
+                    </h4>
+
+                    {/* Market Potential */}
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.15 }}
+                    >
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="flex items-center gap-2 text-sm text-secondary">
+                                <span>📈</span>
+                                <span>Market Potential</span>
+                            </label>
+                            <span className={`font-bold text-sm ${getScoreColor(marketScore).text}`}>
+                                {marketScore}/100
+                            </span>
                         </div>
-
-                        {/* Market Score */}
-                        <div className="mb-3">
-                            <div className="flex justify-between items-center mb-1">
-                                <span className="text-xs text-muted-foreground/80">Market Potential</span>
-                                <span className="text-xs font-bold text-emerald-400">{marketScore}/100</span>
-                            </div>
-                            <div className="w-full h-2 bg-slate-900/50 rounded-full overflow-hidden border border-slate-700/20">
-                                <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${marketScore}%` }}
-                                    transition={{ duration: 0.6, ease: 'easeOut' }}
-                                    className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full"
-                                />
-                            </div>
+                        <div className="h-3 bg-surface-secondary rounded-full overflow-hidden">
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${marketScore}%` }}
+                                transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+                                className={`h-full bg-gradient-to-r ${getScoreColor(marketScore).bar} rounded-full`}
+                            />
                         </div>
+                    </motion.div>
 
-                        {/* Competition Score */}
-                        <div className="mb-3">
-                            <div className="flex justify-between items-center mb-1">
-                                <span className="text-xs text-muted-foreground/80">Low Competition</span>
-                                <span className="text-xs font-bold text-blue-400">{100 - competitionScore}/100</span>
-                            </div>
-                            <div className="w-full h-2 bg-slate-900/50 rounded-full overflow-hidden border border-slate-700/20">
-                                <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${100 - competitionScore}%` }}
-                                    transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}
-                                    className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full"
-                                />
-                            </div>
+                    {/* Competition Score */}
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.25 }}
+                    >
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="flex items-center gap-2 text-sm text-secondary">
+                                <span>⚔️</span>
+                                <span>Low Competition</span>
+                            </label>
+                            <span className={`font-bold text-sm ${getScoreColor(100 - competitionScore).text}`}>
+                                {100 - competitionScore}/100
+                            </span>
                         </div>
-
-                        {/* Feasibility Score */}
-                        <div>
-                            <div className="flex justify-between items-center mb-1">
-                                <span className="text-xs text-muted-foreground/80">Feasibility</span>
-                                <span className="text-xs font-bold text-purple-400">{feasibilityScore}/100</span>
-                            </div>
-                            <div className="w-full h-2 bg-slate-900/50 rounded-full overflow-hidden border border-slate-700/20">
-                                <motion.div
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${feasibilityScore}%` }}
-                                    transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
-                                    className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full"
-                                />
-                            </div>
+                        <div className="h-3 bg-surface-secondary rounded-full overflow-hidden">
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${100 - competitionScore}%` }}
+                                transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
+                                className={`h-full bg-gradient-to-r ${getScoreColor(100 - competitionScore).bar} rounded-full`}
+                            />
                         </div>
-                    </div>
+                    </motion.div>
 
-                    {/* Expand Analysis Button */}
-                    {analysisText && (
+                    {/* Feasibility Score */}
+                    <motion.div
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.35 }}
+                    >
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="flex items-center gap-2 text-sm text-secondary">
+                                <span>⚙️</span>
+                                <span>Feasibility</span>
+                            </label>
+                            <span className={`font-bold text-sm ${getScoreColor(feasibilityScore).text}`}>
+                                {feasibilityScore}/100
+                            </span>
+                        </div>
+                        <div className="h-3 bg-surface-secondary rounded-full overflow-hidden">
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${feasibilityScore}%` }}
+                                transition={{ duration: 0.8, delay: 0.4, ease: 'easeOut' }}
+                                className={`h-full bg-gradient-to-r ${getScoreColor(feasibilityScore).bar} rounded-full`}
+                            />
+                        </div>
+                    </motion.div>
+                </div>
+
+                {/* Expand Analysis Button */}
+                {analysisText && (
+                    <>
+                        <div className="h-px bg-border-subtle" />
                         <motion.button
                             onClick={() => setIsExpanded(!isExpanded)}
-                            className="w-full py-2 px-3 rounded-lg text-xs font-semibold text-muted-foreground hover:text-foreground bg-slate-800/30 hover:bg-slate-800/50 border border-slate-700/20 hover:border-primary/30 transition-all flex items-center justify-center gap-2 mb-3"
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
+                            className="w-full py-2.5 px-3 rounded-lg text-sm font-semibold text-primary hover:bg-surface-secondary bg-surface-secondary/50 border border-default hover:border-primary/30 transition-all flex items-center justify-center gap-2"
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.99 }}
                         >
                             <span>
                                 {isExpanded ? 'Hide' : 'Show'} Full Analysis
                             </span>
-                            <ChevronDown
-                                className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                            />
+                            <motion.div
+                                animate={{ rotate: isExpanded ? 180 : 0 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <ChevronDown className="w-4 h-4" />
+                            </motion.div>
                         </motion.button>
-                    )}
+                    </>
+                )}
 
-                    {/* Expandable Analysis Section */}
-                    {analysisText && (
-                        <motion.div
-                            variants={expandVariants}
-                            initial="collapsed"
-                            animate={isExpanded ? 'expanded' : 'collapsed'}
-                            className="overflow-hidden"
-                        >
-                            <div className="p-3 rounded-lg bg-slate-900/40 border border-primary/20 mb-3">
-                                <p className="text-xs leading-relaxed text-muted-foreground/90 whitespace-pre-wrap">
-                                    {analysisText}
-                                </p>
-                            </div>
-                        </motion.div>
-                    )}
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex items-center gap-2 px-5 py-3 border-t border-slate-700/30 bg-slate-900/20">
-                    <button
-                        onClick={() => onSelect?.(id)}
-                        className="flex-1 px-3 py-2 rounded-md text-sm font-medium text-foreground bg-gradient-to-r from-primary/40 to-primary/20 hover:from-primary/50 hover:to-primary/30 border border-primary/30 hover:border-primary/50 transition-all flex items-center justify-center gap-2 group/btn"
+                {/* Expandable Analysis Section */}
+                {analysisText && (
+                    <motion.div
+                        variants={expandVariants}
+                        initial="collapsed"
+                        animate={isExpanded ? 'expanded' : 'collapsed'}
+                        className="overflow-hidden"
                     >
-                        <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform" />
-                        Details
+                        <div className="p-4 rounded-lg bg-surface-secondary border border-default">
+                            <p className="text-sm leading-relaxed text-secondary whitespace-pre-wrap">
+                                {analysisText}
+                            </p>
+                        </div>
+                    </motion.div>
+                )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-2 px-6 py-4 border-t border-default bg-surface-secondary/30">
+                <button
+                    onClick={() => onSelect?.(id)}
+                    className="flex-1 px-4 py-2 rounded-lg text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary/90 transition-colors duration-200 flex items-center justify-center gap-2"
+                >
+                    <ChevronRight className="w-4 h-4" />
+                    <span className="hidden sm:inline">View Details</span>
+                    <span className="sm:hidden">Details</span>
+                </button>
+                {onReanalyze && (
+                    <button
+                        onClick={() => onReanalyze(id)}
+                        className="px-4 py-2 rounded-lg text-sm font-semibold text-yellow-700 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-200 dark:hover:bg-yellow-900/50 border border-yellow-200 dark:border-yellow-800 transition-colors duration-200 flex items-center justify-center gap-1"
+                        title="Re-analyze this idea"
+                    >
+                        <RotateCcw className="w-4 h-4" />
+                        <span className="hidden sm:inline">Re-analyze</span>
                     </button>
-                    {onReanalyze && (
-                        <button
-                            onClick={() => onReanalyze(id)}
-                            className="px-3 py-2 rounded-md text-sm font-medium text-amber-400/80 hover:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 hover:border-amber-500/40 transition-all flex items-center justify-center gap-1"
-                            title="Re-analyze this idea"
-                        >
-                            <RotateCcw className="w-4 h-4" />
-                            <span className="hidden sm:inline">Re-analyze</span>
-                        </button>
-                    )}
+                )}
 
-                    {onCompare && (
-                        <button
-                            onClick={() => onCompare(id)}
-                            className={`px-3 py-2 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-1 border ${isSelected
-                                ? 'bg-blue-500/20 text-blue-400 border-blue-500/40 hover:bg-blue-500/30'
-                                : 'bg-slate-700/30 text-slate-400 hover:text-slate-300 border-slate-700/40 hover:bg-slate-700/50'
-                                }`}
-                            title="Compare ideas"
-                        >
-                            <Layers className="w-4 h-4" />
-                            <span className="hidden sm:inline">Compare</span>
-                        </button>
-                    )}
+                {onCompare && (
+                    <button
+                        onClick={() => onCompare(id)}
+                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors duration-200 flex items-center justify-center gap-1 border ${isSelected
+                            ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800'
+                            : 'bg-surface-secondary text-secondary border-default hover:bg-surface-tertiary'
+                            }`}
+                        title="Compare ideas"
+                    >
+                        <Layers className="w-4 h-4" />
+                        <span className="hidden sm:inline">Compare</span>
+                    </button>
+                )}
 
-                    {onDelete && (
-                        <button
-                            onClick={() => onDelete(id)}
-                            className="px-3 py-2 rounded-md text-sm font-medium text-red-400/60 hover:text-red-400 hover:bg-red-500/10 border border-red-500/20 hover:border-red-500/40 transition-all flex items-center justify-center"
-                            title="Delete report"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </button>
-                    )}
-                </div>
+                {onDelete && (
+                    <button
+                        onClick={() => onDelete(id)}
+                        className="px-4 py-2 rounded-lg text-sm font-semibold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800 transition-colors duration-200 flex items-center justify-center"
+                        title="Delete report"
+                    >
+                        <Trash2 className="w-4 h-4" />
+                    </button>
+                )}
             </div>
         </motion.div>
     );
