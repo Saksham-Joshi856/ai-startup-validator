@@ -23,7 +23,7 @@ const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
         const data = payload[0].payload;
         return (
-            <div className="bg-slate-900 border border-slate-700 rounded-lg p-3 shadow-lg">
+            <div className="bg-card border border-border/20 rounded-lg p-3 shadow-md">
                 <p className="text-xs font-semibold text-foreground mb-1">
                     {data.date}
                 </p>
@@ -46,13 +46,13 @@ export const ScoreTrendChart = ({ data }: ScoreTrendChartProps) => {
                 variants={chartVariants}
                 initial="hidden"
                 animate="show"
-                className="p-6 rounded-lg bg-gradient-to-br from-slate-900/50 to-slate-800/30 border border-slate-700/40 mb-6"
+                className="p-6 rounded-lg bg-card border border-border/20"
             >
                 <div className="flex items-center gap-2 mb-4">
                     <TrendingUp className="w-5 h-5 text-primary" />
-                    <h3 className="font-bold text-foreground">Score Trend</h3>
+                    <h3 className="font-semibold text-foreground">Score Trend</h3>
                 </div>
-                <div className="text-center py-8">
+                <div className="text-center py-12">
                     <p className="text-sm text-muted-foreground">
                         Create multiple ideas to see your score trend
                     </p>
@@ -66,44 +66,50 @@ export const ScoreTrendChart = ({ data }: ScoreTrendChartProps) => {
             variants={chartVariants}
             initial="hidden"
             animate="show"
-            className="p-6 rounded-lg bg-gradient-to-br from-slate-900/50 to-slate-800/30 border border-slate-700/40 mb-6"
+            className="p-6 rounded-lg bg-card border border-border/20"
         >
             <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="w-5 h-5 text-primary" />
-                <h3 className="font-bold text-foreground">Score Trend Over Time</h3>
+                <h3 className="font-semibold text-foreground">Score Trend Over Time</h3>
             </div>
 
-            <div className="w-full h-64">
+            <div className="w-full" style={{ height: 'clamp(250px, 60vw, 400px)' }}>
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={data}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(100, 116, 139, 0.2)" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.3)" vertical={false} />
                         <XAxis
                             dataKey="date"
-                            stroke="rgba(148, 163, 184, 0.5)"
+                            stroke="hsl(var(--muted-foreground))"
                             style={{ fontSize: '12px' }}
+                            tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                            axisLine={false}
+                            tickLine={false}
                         />
                         <YAxis
                             domain={[0, 100]}
-                            stroke="rgba(148, 163, 184, 0.5)"
+                            stroke="hsl(var(--muted-foreground))"
                             style={{ fontSize: '12px' }}
+                            tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                            axisLine={false}
+                            tickLine={false}
+                            width={40}
                         />
                         <Tooltip content={<CustomTooltip />} />
                         <Line
                             type="monotone"
                             dataKey="score"
-                            stroke="#0ea5e9"
-                            strokeWidth={3}
-                            dot={{ fill: '#0ea5e9', r: 4 }}
-                            activeDot={{ r: 6, fill: '#06b6d4' }}
-                            isAnimationActive={true}
+                            stroke="hsl(var(--primary))"
+                            strokeWidth={2}
+                            dot={{ fill: 'hsl(var(--primary))', r: 4 }}
+                            activeDot={{ r: 6 }}
                         />
                     </LineChart>
                 </ResponsiveContainer>
             </div>
 
-            <div className="mt-4 p-3 rounded-md bg-slate-700/20 border border-slate-600/20">
+            <div className="mt-4 p-3 rounded-lg bg-muted/30 border border-border/10">
                 <p className="text-xs text-muted-foreground">
-                    <span className="font-semibold text-foreground">Tip:</span> Track how your idea scores improve over time as you refine them. Click on any point to see details.
+                    <span className="font-semibold text-foreground">Tip:</span> Track how your idea scores improve over time as you refine them.
                 </p>
             </div>
         </motion.div>

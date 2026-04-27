@@ -49,7 +49,7 @@ export const DashboardPage = () => {
             <LoadingTimeout isVisible={isTimeout && loading} />
 
             {/* Hero Section */}
-            <div className="relative px-6 pt-6 pb-2">
+            <div className="relative px-4 sm:px-6 md:px-8 pt-6 pb-4">
                 <ParticleBackground />
                 <motion.div
                     initial={{ opacity: 0, y: 16 }}
@@ -57,12 +57,9 @@ export const DashboardPage = () => {
                     transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                     className="relative z-10"
                 >
-                    <div className="flex items-center gap-3 mb-1">
+                    <div className="flex items-center gap-3 mb-2">
                         <LayoutDashboard className="w-6 h-6 text-primary" />
-                        <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Dashboard</h1>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20 ai-badge-glow">
-                            AI Powered
-                        </span>
+                        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
                     </div>
                     <p className="text-sm text-muted-foreground">
                         Real-time startup validation analytics &amp; insights
@@ -70,18 +67,16 @@ export const DashboardPage = () => {
                 </motion.div>
             </div>
 
-            <div className="px-6 pb-8">
+            <div className="px-4 sm:px-6 md:px-8 pb-8 space-y-6">
                 {/* Stats Grid - Show skeleton while loading */}
                 {loading && !stats ? (
-                    <div className="mb-6">
-                        <StatSkeleton />
-                    </div>
+                    <StatSkeleton />
                 ) : (
                     <motion.div
                         variants={stagger}
                         initial="hidden"
                         animate="show"
-                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"
+                        className="grid grid-cols-1 md:grid-cols-3 gap-4"
                     >
                         {displayStats.map((stat, i) => (
                             <StatCard key={stat.label} {...stat} index={i} />
@@ -91,48 +86,58 @@ export const DashboardPage = () => {
 
                 {/* RETENTION FEATURES */}
                 {/* Engagement Reminders */}
-                <RetentionReminders userId={user?.id || null} maxSuggestions={3} />
+                <div>
+                    <RetentionReminders userId={user?.id || null} maxSuggestions={3} />
+                </div>
 
                 {/* Last Analyzed Idea - Quick Continue Action */}
-                <div className="mb-6">
+                <div>
                     <LastAnalyzedIdea userId={user?.id || null} />
                 </div>
 
                 {/* Engagement Status */}
-                <div className="mb-6">
+                <div>
                     <EngagementStatus userId={user?.id || null} />
                 </div>
 
                 {/* Smart Suggestion Cards */}
-                <SmartSuggestionCards userId={user?.id || null} />
+                <div>
+                    <SmartSuggestionCards userId={user?.id || null} />
+                </div>
 
                 {/* Personalized Insights Card */}
-                <PersonalizedInsightsCard insights={insights} loading={insightsLoading} />
+                <div>
+                    <PersonalizedInsightsCard insights={insights} loading={insightsLoading} />
+                </div>
 
                 {/* Score Trend Chart */}
-                <ScoreTrendChart data={insights.scoresTrend} />
+                <div>
+                    <ScoreTrendChart data={insights.scoresTrend} />
+                </div>
 
                 {/* Quick Actions Panel */}
-                <QuickActionsPanel />
+                <div>
+                    <QuickActionsPanel />
+                </div>
 
                 {/* Idea Submission Form */}
-                <div className="mb-8">
+                <div>
                     <IdeaSubmissionForm />
                 </div>
 
                 {/* Ideas List */}
-                <div className="mb-8">
+                <div>
                     <IdeasList />
                 </div>
 
                 {/* Charts Row 1 */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <IndustryTrendChart />
                     <ScoreDistributionChart />
                 </div>
 
                 {/* Table + Insights */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2">
                         {loading && !stats ? <TableSkeleton /> : <RecentValidations />}
                     </div>
@@ -140,7 +145,7 @@ export const DashboardPage = () => {
                 </div>
 
                 {/* Market Opportunity */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <LazyMarketOpportunityChart />
                 </div>
             </div>
