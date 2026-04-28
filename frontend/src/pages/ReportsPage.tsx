@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { FileText, Lightbulb } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/context/LanguageContext";
 import { useGetIdeas, useGetAnalysis } from "@/hooks/useApiCalls";
 import { useReanalyzeIdea } from "@/hooks/useReanalyzeIdea";
 import { LoadingTimeout } from "@/components/common/LoadingTimeout";
@@ -13,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export const ReportsPage = () => {
     const { user } = useAuth();
+    const { t } = useLanguage();
     const { ideas, loading, isTimeout, refetch } = useGetIdeas(user?.id || null);
     const { toast } = useToast();
     const { reanalyze, loading: reanalyzing } = useReanalyzeIdea();
@@ -151,13 +153,13 @@ export const ReportsPage = () => {
                 >
                     <div className="flex items-center gap-3 mb-1">
                         <FileText className="w-6 h-6 text-primary" />
-                        <h1 className="text-2xl font-extrabold text-foreground tracking-tight">My Reports</h1>
+                        <h1 className="text-2xl font-extrabold text-foreground tracking-tight">{t("reportsTitle")}</h1>
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20">
-                            {filteredIdeas.length} Reports
+                            {filteredIdeas.length} {t("reports")}
                         </span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                        View, filter, compare, and re-analyze your startup validation reports
+                        {t("reportsSubtitle")}
                     </p>
                 </motion.div>
             </div>

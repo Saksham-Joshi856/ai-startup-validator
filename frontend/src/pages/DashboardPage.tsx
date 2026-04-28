@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/context/LanguageContext";
 import { useDashboardStats } from "@/hooks/useApiCalls";
 import { usePersonalizedInsights } from "@/hooks/usePersonalizedInsights";
 import { StatCard } from "@/components/cards/StatCard";
@@ -31,15 +32,16 @@ const stagger = {
 
 export const DashboardPage = () => {
     const { user } = useAuth();
+    const { t } = useLanguage();
     const { stats, loading, isTimeout } = useDashboardStats(user?.id || null);
     const { insights, loading: insightsLoading } = usePersonalizedInsights(user?.id || null);
 
     // Transform API stats to StatCard format
     const displayStats = stats
         ? [
-            { label: "Total Ideas Analyzed", value: stats.total_ideas || 0, change: "+0%", positive: true, icon: "Lightbulb" as const },
-            { label: "Average Startup Score", value: stats.avg_score || 0, change: "+0%", positive: true, icon: "TrendingUp" as const, suffix: "/100" },
-            { label: "Success Rate", value: stats.success_rate || 0, change: "+0%", positive: true, icon: "CheckCircle" as const, suffix: "%" },
+            { label: t("totalIdeasAnalyzed"), value: stats.total_ideas || 0, change: "+0%", positive: true, icon: "Lightbulb" as const },
+            { label: t("averageStartupScore"), value: stats.avg_score || 0, change: "+0%", positive: true, icon: "TrendingUp" as const, suffix: t("scoreOutOf") },
+            { label: t("successRate"), value: stats.success_rate || 0, change: "+0%", positive: true, icon: "CheckCircle" as const, suffix: t("percentageSymbol") },
         ]
         : mockStatsData.slice(0, 3); // Fallback to mock data
 
@@ -59,10 +61,10 @@ export const DashboardPage = () => {
                 >
                     <div className="flex items-center gap-3 mb-2">
                         <LayoutDashboard className="w-6 h-6 text-primary" />
-                        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+                        <h1 className="text-2xl font-bold text-foreground">{t("dashboardTitle")}</h1>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                        Real-time startup validation analytics &amp; insights
+                        {t("dashboardSubtitle")}
                     </p>
                 </motion.div>
             </div>

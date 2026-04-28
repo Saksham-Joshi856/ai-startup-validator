@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 import { useAnalyzeIdea } from "@/hooks/useAnalyzeIdea";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/context/LanguageContext";
 
 const INDUSTRIES = [
     'EdTech', 'FinTech', 'HealthTech', 'HR Tech', 'AI/ML', 'E-commerce', 'SaaS', 'Sustainability',
@@ -77,7 +78,16 @@ export const ValidateIdeaPage = () => {
     const [currentStep, setCurrentStep] = useState(0);
     const stepIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const { user } = useAuth();
+    const { t } = useLanguage();
     const { isLoading, error, data, analyzeIdea, reset } = useAnalyzeIdea();
+
+    // Create dynamic ANALYSIS_STEPS with translations
+    const ANALYSIS_STEPS = [
+        { step: 1, messageKey: "analyzingMarket" },
+        { step: 2, messageKey: "evaluatingCompetition" },
+        { step: 3, messageKey: "calculatingFeasibility" },
+        { step: 4, messageKey: "generatingAiSuggestions" },
+    ];
 
     // Cleanup interval on unmount
     useEffect(() => {
@@ -145,13 +155,13 @@ export const ValidateIdeaPage = () => {
                 >
                     <div className="flex items-center gap-3 mb-2">
                         <Lightbulb className="w-6 h-6 text-primary" />
-                        <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">Validate Your Idea</h1>
+                        <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">{t("validateTitle")}</h1>
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20 ai-badge-glow">
                             AI Powered
                         </span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                        Get AI-powered analysis on market potential, competition, and feasibility
+                        {t("validateSubtitle")}
                     </p>
                 </motion.div>
             </div>
@@ -169,11 +179,11 @@ export const ValidateIdeaPage = () => {
                             {/* Idea Textarea */}
                             <div className="space-y-2">
                                 <label htmlFor="ideaText" className="text-sm font-medium text-foreground">
-                                    Your Startup Idea
+                                    {t("yourIdea")}
                                 </label>
                                 <textarea
                                     id="ideaText"
-                                    placeholder="Describe your startup idea in detail. What problem does it solve? Who is your target audience?"
+                                    placeholder={t("enterIdeaDescription")}
                                     value={ideaText}
                                     onChange={(e) => setIdeaText(e.target.value)}
                                     disabled={isLoading}
@@ -185,7 +195,7 @@ export const ValidateIdeaPage = () => {
                             {/* Industry Dropdown */}
                             <div className="space-y-2">
                                 <label htmlFor="industry" className="text-sm font-medium text-foreground">
-                                    Industry Category
+                                    {t("selectIndustry")}
                                 </label>
                                 <select
                                     id="industry"
@@ -213,7 +223,7 @@ export const ValidateIdeaPage = () => {
                                     {isLoading ? (
                                         <>
                                             <Loader2 className="w-4 h-4 animate-spin" />
-                                            Analyzing...
+                                            {t("analyzing")}...
                                         </>
                                     ) : (
                                         <>
@@ -259,7 +269,7 @@ export const ValidateIdeaPage = () => {
                                             <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30 flex-shrink-0" />
                                         )}
                                         <span className={`text-sm font-medium ${index <= currentStep ? "text-foreground" : "text-muted-foreground"}`}>
-                                            {item.message}
+                                            {t(item.messageKey)}
                                         </span>
                                     </motion.div>
                                 ))}
@@ -316,17 +326,17 @@ export const ValidateIdeaPage = () => {
                         {/* Score Indicators Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <ScoreIndicator
-                                label="Market Potential"
+                                label={t("marketPotential")}
                                 score={data.analysis.market_score}
                                 icon={<TrendingUp className="w-5 h-5" />}
                             />
                             <ScoreIndicator
-                                label="Competition Level"
+                                label={t("competition")}
                                 score={data.analysis.competition_score}
                                 icon={<Users className="w-5 h-5" />}
                             />
                             <ScoreIndicator
-                                label="Feasibility"
+                                label={t("feasibility")}
                                 score={data.analysis.feasibility_score}
                                 icon={<Target className="w-5 h-5" />}
                             />
