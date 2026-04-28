@@ -5,17 +5,18 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabaseClient";
 import { useTheme } from "@/hooks/use-theme";
+import { useLanguage } from "@/context/LanguageContext";
 
 export const SettingsPage = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const { theme, toggleTheme } = useTheme();
+    const { language, setLanguage, t } = useLanguage();
     const [settings, setSettings] = useState({
         emailNotifications: true,
         pushNotifications: false,
         darkMode: theme === "dark",
         analytics: true,
-        language: "en",
     });
     const [loading, setLoading] = useState(false);
 
@@ -24,6 +25,12 @@ export const SettingsPage = () => {
             toggleTheme();
         }
         setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+    };
+
+    const handleLanguageChange = (newLanguage: string) => {
+        if (newLanguage === "en" || newLanguage === "es" || newLanguage === "fr") {
+            setLanguage(newLanguage);
+        }
     };
 
     const handleLogout = async () => {
@@ -40,43 +47,46 @@ export const SettingsPage = () => {
 
     const settingsSections = [
         {
-            title: "Notifications",
+            title: t("notifications"),
+            titleKey: "notifications",
             icon: Bell,
             color: "text-blue-500",
             settings: [
                 {
                     id: "emailNotifications",
-                    label: "Email Notifications",
-                    description: "Receive email updates about your validations",
+                    labelKey: "emailNotifications",
+                    descKey: "emailNotificationsDesc",
                 },
                 {
                     id: "pushNotifications",
-                    label: "Push Notifications",
-                    description: "Get push alerts for important updates",
+                    labelKey: "pushNotifications",
+                    descKey: "pushNotificationsDesc",
                 },
             ],
         },
         {
-            title: "Appearance",
+            title: t("appearance"),
+            titleKey: "appearance",
             icon: Moon,
             color: "text-purple-500",
             settings: [
                 {
                     id: "darkMode",
-                    label: "Dark Mode",
-                    description: "Use dark theme for the application",
+                    labelKey: "darkMode",
+                    descKey: "darkModeDesc",
                 },
             ],
         },
         {
-            title: "Privacy & Security",
+            title: t("privacySecurity"),
+            titleKey: "privacySecurity",
             icon: Shield,
             color: "text-green-500",
             settings: [
                 {
                     id: "analytics",
-                    label: "Analytics Tracking",
-                    description: "Allow us to collect anonymous usage data",
+                    labelKey: "analytics",
+                    descKey: "analyticsDesc",
                 },
             ],
         },
@@ -94,10 +104,10 @@ export const SettingsPage = () => {
                 >
                     <div className="flex items-center gap-3 mb-1">
                         <Settings className="w-6 h-6 text-primary" />
-                        <h1 className="text-2xl font-extrabold text-foreground tracking-tight">Settings</h1>
+                        <h1 className="text-2xl font-extrabold text-foreground tracking-tight">{t("settings")}</h1>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                        Manage your account preferences and application settings
+                        {t("managePreferences")}
                     </p>
                 </motion.div>
             </div>
@@ -112,10 +122,10 @@ export const SettingsPage = () => {
                         transition={{ delay: 0.05, duration: 0.5 }}
                         className="glass-effect rounded-xl p-6 border border-primary/10"
                     >
-                        <h3 className="font-semibold text-foreground mb-4">Account Settings</h3>
+                        <h3 className="font-semibold text-foreground mb-4">{t("accountSettings")}</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="text-sm font-medium text-foreground block mb-2">Email Address</label>
+                                <label className="text-sm font-medium text-foreground block mb-2">{t("emailAddress")}</label>
                                 <input
                                     type="email"
                                     value={user?.email || ""}
@@ -124,7 +134,7 @@ export const SettingsPage = () => {
                                 />
                             </div>
                             <div>
-                                <label className="text-sm font-medium text-foreground block mb-2">Full Name</label>
+                                <label className="text-sm font-medium text-foreground block mb-2">{t("fullName")}</label>
                                 <input
                                     type="text"
                                     value={user?.user_metadata?.full_name || user?.email?.split("@")[0] || ""}
@@ -138,7 +148,7 @@ export const SettingsPage = () => {
                     {/* Settings Sections */}
                     {settingsSections.map((section, sectionIdx) => (
                         <motion.div
-                            key={section.title}
+                            key={section.titleKey}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 + sectionIdx * 0.05, duration: 0.5 }}
@@ -152,8 +162,8 @@ export const SettingsPage = () => {
                                 {section.settings.map((setting) => (
                                     <div key={setting.id} className="flex items-center justify-between pb-3 border-b border-border/20 last:border-0 last:pb-0">
                                         <div>
-                                            <p className="text-sm font-medium text-gray-900 dark:text-white">{setting.label}</p>
-                                            <p className="text-xs text-muted-foreground">{setting.description}</p>
+                                            <p className="text-sm font-medium text-gray-900 dark:text-white">{t(setting.labelKey)}</p>
+                                            <p className="text-xs text-muted-foreground">{t(setting.descKey)}</p>
                                         </div>
                                         <button
                                             onClick={() => handleToggle(setting.id)}
@@ -161,7 +171,7 @@ export const SettingsPage = () => {
                                                 ? "bg-indigo-600 shadow-lg shadow-indigo-500/30"
                                                 : "bg-gray-300 dark:bg-gray-700"
                                                 }`}
-                                            aria-label={`Toggle ${setting.label}`}
+                                            aria-label={`Toggle ${t(setting.labelKey)}`}
                                             aria-pressed={settings[setting.id as keyof typeof settings]}
                                         >
                                             <motion.div
@@ -187,18 +197,16 @@ export const SettingsPage = () => {
                     >
                         <div className="flex items-center gap-2 mb-4">
                             <Globe className="w-5 h-5 text-orange-500" />
-                            <h3 className="font-semibold text-foreground">Language & Region</h3>
+                            <h3 className="font-semibold text-foreground">{t("languageRegion")}</h3>
                         </div>
                         <select
-                            value={settings.language}
-                            onChange={(e) => setSettings({ ...settings, language: e.target.value })}
+                            value={language}
+                            onChange={(e) => handleLanguageChange(e.target.value)}
                             className="w-full px-3 py-2 rounded-lg bg-muted/30 dark:bg-gray-800 border border-border/30 dark:border-gray-700 text-foreground focus:outline-none focus:border-primary/50 dark:focus:border-indigo-500/50"
                         >
-                            <option value="en">English</option>
-                            <option value="es">Spanish</option>
-                            <option value="fr">French</option>
-                            <option value="de">German</option>
-                            <option value="ja">Japanese</option>
+                            <option value="en">{t("english")}</option>
+                            <option value="es">{t("spanish")}</option>
+                            <option value="fr">{t("french")}</option>
                         </select>
                     </motion.div>
 
@@ -211,17 +219,17 @@ export const SettingsPage = () => {
                     >
                         <div className="flex items-center gap-2 mb-4">
                             <LogOut className="w-5 h-5 text-red-500" />
-                            <h3 className="font-semibold text-foreground">Session</h3>
+                            <h3 className="font-semibold text-foreground">{t("session")}</h3>
                         </div>
                         <p className="text-sm text-muted-foreground mb-4">
-                            Sign out from your account on this device
+                            {t("signOutDesc")}
                         </p>
                         <button
                             onClick={handleLogout}
                             disabled={loading}
                             className="px-4 py-2 rounded-lg bg-red-500/20 text-red-500 font-medium hover:bg-red-500/30 transition-colors disabled:opacity-50"
                         >
-                            {loading ? "Signing out..." : "Sign Out"}
+                            {loading ? t("signingOut") : t("signOut")}
                         </button>
                     </motion.div>
                 </div>

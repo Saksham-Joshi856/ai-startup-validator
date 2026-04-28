@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/context/AuthContext";
+import { LanguageProvider } from "@/context/LanguageContext";
 import { useAuth } from "@/hooks/useAuth";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { SuspenseFallback } from "@/components/common/SkeletonLoaders";
@@ -111,7 +112,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <ProtectedDashboard />
+          <LanguageProvider>
+            <ProtectedDashboard />
+          </LanguageProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

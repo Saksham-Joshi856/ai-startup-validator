@@ -7,18 +7,20 @@ import {
   Bot,
   Settings,
 } from "lucide-react";
-
-const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: Lightbulb, label: "Validate Idea", path: "/validate" },
-  { icon: FileText, label: "Reports", path: "/reports" },
-  { icon: Bot, label: "AI Advisor", path: "/advisor" },
-  { icon: Settings, label: "Settings", path: "/settings" },
-];
+import { useLanguage } from "@/context/LanguageContext";
 
 export function DashboardSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
+
+  const navItems = [
+    { icon: LayoutDashboard, labelKey: "dashboard", path: "/" },
+    { icon: Lightbulb, labelKey: "validate", path: "/validate" },
+    { icon: FileText, labelKey: "reports", path: "/reports" },
+    { icon: Bot, labelKey: "advisor", path: "/advisor" },
+    { icon: Settings, labelKey: "settings", path: "/settings" },
+  ];
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -77,7 +79,7 @@ export function DashboardSidebar() {
                   : "text-muted"
                   }`}
               >
-                {item.label}
+                {t(item.labelKey)}
               </span>
             </motion.button>
           );
