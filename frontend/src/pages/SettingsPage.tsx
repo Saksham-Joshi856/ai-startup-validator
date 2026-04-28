@@ -152,20 +152,24 @@ export const SettingsPage = () => {
                                 {section.settings.map((setting) => (
                                     <div key={setting.id} className="flex items-center justify-between pb-3 border-b border-border/20 last:border-0 last:pb-0">
                                         <div>
-                                            <p className="text-sm font-medium text-foreground">{setting.label}</p>
+                                            <p className="text-sm font-medium text-gray-900 dark:text-white">{setting.label}</p>
                                             <p className="text-xs text-muted-foreground">{setting.description}</p>
                                         </div>
                                         <button
                                             onClick={() => handleToggle(setting.id)}
-                                            className={`w-10 h-6 rounded-full transition-all duration-300 relative border border-border/30 ${settings[setting.id as keyof typeof settings] ? "bg-primary/10" : "bg-muted/10"
+                                            className={`w-11 h-6 rounded-full transition-all duration-300 relative cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:outline-none ${settings[setting.id as keyof typeof settings]
+                                                    ? "bg-indigo-600 shadow-lg shadow-indigo-500/30"
+                                                    : "bg-gray-300 dark:bg-gray-700"
                                                 }`}
+                                            aria-label={`Toggle ${setting.label}`}
+                                            aria-pressed={settings[setting.id as keyof typeof settings]}
                                         >
                                             <motion.div
                                                 animate={{
-                                                    x: settings[setting.id as keyof typeof settings] ? 18 : 2,
+                                                    x: settings[setting.id as keyof typeof settings] ? 20 : 2,
                                                 }}
                                                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                                                className="w-4 h-4 rounded-full bg-primary/80 absolute top-1 left-1"
+                                                className="w-5 h-5 rounded-full bg-white absolute top-0.5 left-0.5"
                                             />
                                         </button>
                                     </div>
