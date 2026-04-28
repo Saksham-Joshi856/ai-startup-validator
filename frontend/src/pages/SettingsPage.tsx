@@ -158,8 +158,8 @@ export const SettingsPage = () => {
                                         <button
                                             onClick={() => handleToggle(setting.id)}
                                             className={`w-11 h-6 rounded-full transition-all duration-300 relative cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:outline-none ${settings[setting.id as keyof typeof settings]
-                                                    ? "bg-indigo-600 shadow-lg shadow-indigo-500/30"
-                                                    : "bg-gray-300 dark:bg-gray-700"
+                                                ? "bg-indigo-600 shadow-lg shadow-indigo-500/30"
+                                                : "bg-gray-300 dark:bg-gray-700"
                                                 }`}
                                             aria-label={`Toggle ${setting.label}`}
                                             aria-pressed={settings[setting.id as keyof typeof settings]}
@@ -192,7 +192,7 @@ export const SettingsPage = () => {
                         <select
                             value={settings.language}
                             onChange={(e) => setSettings({ ...settings, language: e.target.value })}
-                            className="w-full px-3 py-2 rounded-lg bg-muted/30 border border-border/30 text-foreground focus:outline-none focus:border-primary/50"
+                            className="w-full px-3 py-2 rounded-lg bg-muted/30 dark:bg-gray-800 border border-border/30 dark:border-gray-700 text-foreground focus:outline-none focus:border-primary/50 dark:focus:border-indigo-500/50"
                         >
                             <option value="en">English</option>
                             <option value="es">Spanish</option>
