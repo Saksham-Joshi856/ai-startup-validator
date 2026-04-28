@@ -157,7 +157,7 @@ export const SettingsPage = () => {
                                         </div>
                                         <button
                                             onClick={() => handleToggle(setting.id)}
-                                            className={`w-10 h-6 rounded-full transition-all duration-300 relative ${settings[setting.id as keyof typeof settings] ? "bg-primary/30" : "bg-muted/30"
+                                            className={`w-10 h-6 rounded-full transition-all duration-300 relative border border-border/30 ${settings[setting.id as keyof typeof settings] ? "bg-primary/10" : "bg-muted/10"
                                                 }`}
                                         >
                                             <motion.div
@@ -165,7 +165,7 @@ export const SettingsPage = () => {
                                                     x: settings[setting.id as keyof typeof settings] ? 18 : 2,
                                                 }}
                                                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                                                className="w-4 h-4 rounded-full bg-primary absolute top-1 left-1"
+                                                className="w-4 h-4 rounded-full bg-primary/80 absolute top-1 left-1"
                                             />
                                         </button>
                                     </div>
